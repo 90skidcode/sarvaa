@@ -136,3 +136,15 @@ model Settings {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
+
+model Banner {
+  id            String   @id @default(cuid())
+  title         String
+  desktopImage  String   // Desktop banner image path (1920x768)
+  mobileImage   String?  // Mobile banner image path (768x512)
+  link          String?  // Optional link when banner is clicked
+  isActive      Boolean  @default(true)
+  displayOrder  Int      @default(0) // Order in which banners appear
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

@@ -13,7 +13,6 @@ import { toast } from 'sonner'
 export function CustomCakeSection() {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
-    cakeType: '',
     flavor: '',
     weight: '',
     message: '',
@@ -38,7 +37,7 @@ export function CustomCakeSection() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.cakeType || !formData.flavor || !formData.weight) {
+    if ( !formData.flavor || !formData.weight) {
       toast.error('Please fill in all required fields')
       return
     }
@@ -52,7 +51,6 @@ export function CustomCakeSection() {
       })
       // Reset form
       setFormData({
-        cakeType: '',
         flavor: '',
         weight: '',
         message: '',
@@ -162,27 +160,13 @@ export function CustomCakeSection() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="cakeType" className="font-bold text-gray-700">Type of Cake</Label>
-                        <Select value={formData.cakeType} onValueChange={(val) => setFormData({...formData, cakeType: val})}>
-                          <SelectTrigger className="rounded-xl border-gray-200 h-12 focus:ring-[#743181]/20">
-                            <SelectValue placeholder="Select Type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="tiered">Tiered Celebration</SelectItem>
-                            <SelectItem value="round">Classic Round</SelectItem>
-                            <SelectItem value="heart">Romantic Heart</SelectItem>
-                            <SelectItem value="square">Modern Square</SelectItem>
-                            <SelectItem value="sculpted">Sculpted / Theme</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                    <div className="grid gap-4">
+                     
 
                       <div className="space-y-2">
                         <Label htmlFor="flavor" className="font-bold text-gray-700">Flavors</Label>
-                        <Select value={formData.flavor} onValueChange={(val) => setFormData({...formData, flavor: val})}>
-                          <SelectTrigger className="rounded-xl border-gray-200 h-12 focus:ring-[#743181]/20">
+                        <Select value={formData.flavor} onValueChange={(val) => setFormData({...formData, flavor: val})} >
+                          <SelectTrigger className="rounded-xl border-gray-200 h-12 focus:ring-[#743181]/20 w-full">
                             <SelectValue placeholder="Chose Flavor" />
                           </SelectTrigger>
                           <SelectContent>
@@ -196,11 +180,11 @@ export function CustomCakeSection() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="weight" className="font-bold text-gray-700">Weight (KGs)</Label>
                         <Select value={formData.weight} onValueChange={(val) => setFormData({...formData, weight: val})}>
-                          <SelectTrigger className="rounded-xl border-gray-200 h-12 focus:ring-[#743181]/20">
+                          <SelectTrigger className="rounded-xl border-gray-200 h-12 focus:ring-[#743181]/20 w-full">
                             <SelectValue placeholder="Select KG" />
                           </SelectTrigger>
                           <SelectContent>
@@ -213,13 +197,6 @@ export function CustomCakeSection() {
                         </Select>
                       </div>
                       
-                      <div className="space-y-2">
-                        <Label htmlFor="message" className="font-bold text-gray-700">Occasion</Label>
-                        <Input 
-                          placeholder="e.g. Birthday, Wedding" 
-                          className="rounded-xl border-gray-200 h-12 focus:ring-[#743181]/20"
-                        />
-                      </div>
                     </div>
 
                     <div className="space-y-2">

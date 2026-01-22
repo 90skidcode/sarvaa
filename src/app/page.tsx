@@ -1,10 +1,10 @@
 'use client'
 
 import { CustomCakeSection } from '@/components/CustomCakeSection'
+import { HeroBannerSlider } from '@/components/HeroBannerSlider'
 import { ProductCard } from '@/components/ProductCard'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Award, ChevronRight, Clock, Sparkles, Star, Truck } from 'lucide-react'
+import { Award, ChevronRight, Clock, Star, Truck } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
@@ -74,72 +74,18 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-white to-pink-50">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-20 w-72 h-72 bg-[#743181] rounded-full filter blur-3xl"></div>
-          <div className="absolute bottom-20 right-20 w-96 h-96 bg-pink-400 rounded-full filter blur-3xl"></div>
-        </div>
+      {/* Hero Banner Slider */}
+      <HeroBannerSlider />
 
-        <div className="container mx-auto px-4 py-20 relative">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              <div className="space-y-8">
-                <Badge className="bg-gradient-to-r from-[#743181] to-[#5a2a6e] text-white px-4 py-1">
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  தமிழ்நாட்டின் #1 இனிப்பு கடை (Tamil Nadu's #1 Sweet Shop)
-                </Badge>
-                <h1 className="text-5xl lg:text-7xl font-bold text-gray-900 leading-tight">
-                  Crafted with
-                  <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#743181] to-[#5a2a6e]">
-                    Thamizh Parampara
-                  </span>
-                </h1>
-                <p className="text-xl text-gray-600 leading-relaxed max-w-lg">
-                  Experience the authentic taste of Tamil Nadu's traditional sweets. Every creation at Sarvaa Sweets is a masterpiece, handcrafted with pure ghee following centuries-old Tamil recipes for your most cherished moments.
-                </p>
-                <div className="flex flex-wrap gap-4">
-                  <Link href="/products">
-                    <Button size="lg" className="bg-gradient-to-r from-[#743181] to-[#5a2a6e] hover:from-[#5a2a6e] hover:to-[#743181] px-8 py-6 text-lg shadow-lg hover:shadow-xl transition-all">
-                      Order Now
-                    </Button>
-                  </Link>
-                  <Link href="/products">
-                    <Button size="lg" variant="outline" className="border-2 border-[#743181] text-[#743181] hover:bg-purple-50 px-8 py-6 text-lg">
-                      Explore Catalog
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-
-              <div className="relative">
-                <div className="absolute -inset-4 bg-gradient-to-r from-[#743181] to-[#5a2a6e] rounded-3xl blur-2xl opacity-20 animate-pulse"></div>
-                <div className="relative rounded-3xl overflow-hidden shadow-2xl">
-                  <img
-                    src="https://images.unsplash.com/photo-1606858265218-4e4b7927c668?w=800&q=80"
-                    alt="Authentic Tamil Nadu Sweets"
-                    className="w-full object-cover transform hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black/80 to-transparent">
-                    <div className="flex items-center gap-4 text-white">
-                      <div className="p-3 bg-white/20 backdrop-blur-md rounded-xl">
-                        <Award className="h-8 w-8 text-yellow-400" />
-                      </div>
-                      <div>
-                        <p className="text-2xl font-bold italic">Pure Ghee Classics</p>
-                        <p className="text-sm opacity-80 uppercase tracking-widest">Handcrafted Excellence</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Transition to Featured Categories: Smooth Curve */}
+      <div className="w-full overflow-hidden leading-[0] bg-white -mt-1">
+        <svg viewBox="0 0 1440 60" preserveAspectRatio="none" className="relative block w-full h-[30px] md:h-[50px] fill-gray-50" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0,32 C480,64 960,64 1440,32 L1440,60 L0,60 Z" />
+        </svg>
+      </div>
 
       {/* Featured Categories */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white relative">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <Badge className="mb-4 bg-purple-100 text-[#743181]">Special Collections</Badge>
@@ -181,10 +127,17 @@ export default function Home() {
             }
           </div>
         </div>
+
+        {/* Transition to Featured Products: Scalloped Edge */}
+        <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0] translate-y-[1px]">
+          <svg viewBox="0 0 1440 80" preserveAspectRatio="none" className="relative block w-full h-[40px] md:h-[60px] fill-gray-50" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,0 Q60,80 120,0 Q180,80 240,0 Q300,80 360,0 Q420,80 480,0 Q540,80 600,0 Q660,80 720,0 Q780,80 840,0 Q900,80 960,0 Q1020,80 1080,0 Q1140,80 1200,0 Q1260,80 1320,0 Q1380,80 1440,0 V80 H0 Z" />
+          </svg>
+        </div>
       </section>
 
       {/* Featured Products */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-24 bg-gray-50 relative">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-end mb-16">
             <div>
@@ -224,10 +177,17 @@ export default function Home() {
             }
           </div>
         </div>
+
+        {/* Transition to Why Choose Us: Diagonal Tilt */}
+        <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0]">
+          <svg viewBox="0 0 1440 100" preserveAspectRatio="none" className="relative block w-full h-[60px] md:h-[100px] fill-white" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,100 L1440,0 L1440,100 L0,100 Z" />
+          </svg>
+        </div>
       </section>
 
       {/* Why Choose Us */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white relative">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <Badge className="mb-4 bg-purple-100 text-[#743181]">Our Promise</Badge>
@@ -270,72 +230,17 @@ export default function Home() {
             ))}
           </div>
         </div>
+        
+        {/* Transition to Custom Cake: Multi-Point Wave */}
+        <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0] translate-y-[1px]">
+          <svg viewBox="0 0 1440 120" preserveAspectRatio="none" className="relative block w-full h-[60px] md:h-[80px] fill-[#743181]/5" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,32L60,42.7C120,53,240,75,360,74.7C480,75,600,53,720,48C840,43,960,53,1080,58.7C1200,64,1320,64,1380,64L1440,64L1440,120L1380,120C1320,120,1200,120,1080,120C960,120,840,120,720,120C600,120,480,120,360,120C240,120,120,120,60,120L0,120Z" />
+          </svg>
+        </div>
       </section>
 
       {/* Custom Cake Section */}
       <CustomCakeSection />
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-300 py-16">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-            <div>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-white rounded-lg">
-                  <img src="/images/sarvaa-logo-icon.jpg" alt="Sarvaa Logo" className="w-8 h-8" />
-                </div>
-                <span className="text-white text-xl font-bold tracking-tight">Sarvaa Sweets</span>
-              </div>
-              <p className="mb-6 leading-relaxed">
-                Authentic Tamil Nadu sweets made with pure ghee and centuries-old recipes. Preserving tradition, one sweet at a time.
-              </p>
-              <div className="flex gap-4">
-                {['facebook', 'instagram', 'twitter', 'youtube'].map((social) => (
-                  <Link key={social} href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-[#743181] transition-colors">
-                    <span className="sr-only">{social}</span>
-                    <div className="w-5 h-5 bg-current opacity-70"></div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h4 className="text-white font-bold text-lg mb-6">Quick Links</h4>
-              <ul className="space-y-4">
-                <li><Link href="/products" className="hover:text-white transition-colors">Our Products</Link></li>
-                <li><Link href="/wishlist" className="hover:text-white transition-colors">Wishlist</Link></li>
-                <li><Link href="/cart" className="hover:text-white transition-colors">My Cart</Link></li>
-                <li><Link href="/contact" className="hover:text-white transition-colors">Contact Us</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-white font-bold text-lg mb-6">Collections</h4>
-              <ul className="space-y-4">
-                 {categories.slice(0, 4).map(cat => (
-                   <li key={cat.id}><Link href={`/products?category=${cat.slug}`} className="hover:text-white transition-colors">{cat.name}</Link></li>
-                 ))}
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-white font-bold text-lg mb-6">Newsletter</h4>
-              <p className="mb-4">Get sweet updates and festive offers!</p>
-              <form className="flex gap-2">
-                <input
-                  type="email"
-                  placeholder="Your Email"
-                  className="bg-white/10 rounded-lg px-4 py-2 flex-1 focus:ring-2 focus:ring-[#743181] outline-none"
-                />
-                <Button className="bg-[#743181] hover:bg-[#5a2a6e]">Join</Button>
-              </form>
-            </div>
-          </div>
-          <div className="border-t border-white/10 mt-16 pt-8 text-center text-sm">
-            <p>&copy; {new Date().getFullYear()} Sarvaa Sweets. Dedicated to Tamil Traditions.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }

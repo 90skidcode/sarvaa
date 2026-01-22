@@ -240,7 +240,7 @@ export default function AdminOrdersPage() {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-2xl font-bold text-pink-600">${order.total.toFixed(2)}</p>
+                          <p className="text-2xl font-bold text-[#743181]">₹{order.total.toFixed(2)}</p>
                           <p className="text-sm text-gray-500">
                             {new Date(order.createdAt).toLocaleString()}
                           </p>
@@ -280,9 +280,9 @@ export default function AdminOrdersPage() {
                               />
                               <div className="flex-1">
                                 <p className="font-semibold">{item.product.name}</p>
-                                <p className="text-sm text-gray-600">Qty: {item.quantity} × ${item.price.toFixed(2)}</p>
+                                <p className="text-sm text-gray-600">Qty: {item.quantity} × ₹{item.price.toFixed(2)}</p>
                               </div>
-                              <p className="font-bold">${(item.quantity * item.price).toFixed(2)}</p>
+                              <p className="font-bold">₹{(item.quantity * item.price).toFixed(2)}</p>
                             </div>
                           ))}
                         </div>

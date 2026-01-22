@@ -1,3 +1,4 @@
+import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { Toaster } from "@/components/ui/toaster";
 import type { Metadata } from "next";
@@ -46,6 +47,7 @@ export default function RootLayout({
       >
         <Header />
         {children}
+        <Footer />
         <Toaster />
         <Sonner position="top-right" />
       </body>

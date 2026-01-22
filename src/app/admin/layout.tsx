@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Cake, ClipboardList, LayoutDashboard, LogOut, Package, Store, Tag, Users } from 'lucide-react'
+import { Cake, ClipboardList, ImageIcon, LayoutDashboard, LogOut, Package, Store, Tag, Users } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -21,6 +21,7 @@ export default function AdminLayout({
 
   const navItems = [
     { label: 'Dashboard', href: '/admin', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { label: 'Banners', href: '/admin/banners', icon: <ImageIcon className="h-5 w-5" /> },
     { label: 'Products', href: '/admin/products', icon: <Package className="h-5 w-5" /> },
     { label: 'Categories', href: '/admin/categories', icon: <Tag className="h-5 w-5" /> },
     { label: 'Orders', href: '/admin/orders', icon: <ClipboardList className="h-5 w-5" /> },
