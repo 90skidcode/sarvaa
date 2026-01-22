@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Filter, Search } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 
 interface Product {
   id: string
@@ -33,7 +33,7 @@ const FILTER_CATEGORIES = [
   { label: 'Gift Boxes', value: 'gift-boxes' }
 ]
 
-export default function ProductsPage() {
+function ProductsContent() {
   const searchParams = useSearchParams()
   const searchQuery = searchParams.get('search')
   
@@ -225,3 +225,16 @@ export default function ProductsPage() {
     </div>
   )
 }
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#743181]"></div>
+      </div>
+    }>
+      <ProductsContent />
+    </Suspense>
+  )
+}
+

@@ -1,5 +1,6 @@
 'use client'
 
+import { CustomCakeSection } from '@/components/CustomCakeSection'
 import { ProductCard } from '@/components/ProductCard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -271,38 +272,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="relative py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#743181] to-[#5a2a6e]"></div>
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full filter blur-3xl"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full filter blur-3xl"></div>
-        </div>
-        <div className="container mx-auto px-4 relative">
-          <div className="max-w-3xl mx-auto text-center text-white">
-            <Sparkles className="h-12 w-12 mx-auto mb-6 opacity-80" />
-            <h2 className="text-4xl lg:text-5xl font-bold mb-6">
-              Ready to Taste Authentic Mithai?
-            </h2>
-            <p className="text-xl mb-8 opacity-90">
-              Join thousands of satisfied customers who trust Sarvaa Sweets for their celebrations and special moments
-            </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Link href="/products">
-                <Button size="lg" className="bg-white text-[#743181] hover:bg-gray-100 px-8 py-6 text-lg shadow-xl">
-                  Order Now
-                  <ChevronRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link href="/contact">
-                <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/10 px-8 py-6 text-lg">
-                  Contact Us
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Custom Cake Section */}
+      <CustomCakeSection />
 
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-300 py-16">
