@@ -1,12 +1,9 @@
 'use client'
 
-import { CartBadge } from '@/components/CartBadge'
-import { MobileMenu } from '@/components/MobileMenu'
 import { ProductCard } from '@/components/ProductCard'
-import { SearchBar } from '@/components/SearchBar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Award, ChevronRight, Clock, Heart, Sparkles, Star, Truck, User } from 'lucide-react'
+import { Award, ChevronRight, Clock, Sparkles, Star, Truck } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
@@ -72,83 +69,9 @@ export default function Home() {
     fetchData()
   }, [])
 
+
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      {/* Top Bar */}
-      <div className="bg-gradient-to-r from-[#5a2a6e] to-[#743181] text-white py-2">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center text-sm">
-            <div className="flex items-center gap-6">
-              <span className="flex items-center gap-1">
-                <Truck className="h-4 w-4" />
-                Free Delivery on orders above ₹999
-              </span>
-              <span className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                Same Day Delivery Available
-              </span>
-            </div>
-            <div className="flex items-center gap-4">
-              <span>📞 1800-123-4567</span>
-              <span>📍 India's Premium Sweet Shop</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white shadow-md">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between py-4">
-            <Link href="/" className="flex items-center gap-3 group">
-              <div className="relative w-14 h-14 rounded-full overflow-hidden shadow-lg group-hover:scale-105 transition-transform">
-                <img
-                  src="/images/sarvaa-logo-icon.jpg"
-                  alt="Sarvaa Sweets Logo"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-[#743181] tracking-tight">Sarvaa Sweets</h1>
-                <p className="text-xs text-gray-500 tracking-widest uppercase">Premium Confectionery</p>
-              </div>
-            </Link>
-
-            <nav className="hidden lg:flex items-center gap-8">
-              <Link href="/" className="text-gray-700 hover:text-[#743181] font-medium transition-colors relative group">
-                Home<span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#743181] transition-all group-hover:w-full"></span>
-              </Link>
-              <Link href="/products" className="text-gray-700 hover:text-[#743181] font-medium transition-colors relative group">
-                Shop Sweets<span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#743181] transition-all group-hover:w-full"></span>
-              </Link>
-              <Link href="/contact" className="text-gray-700 hover:text-[#743181] font-medium transition-colors relative group">
-                Contact<span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#743181] transition-all group-hover:w-full"></span>
-              </Link>
-            </nav>
-
-            <div className="flex items-center gap-4">
-              <SearchBar />
-
-              <Link href="/wishlist">
-                <Button variant="ghost" size="icon" className="relative">
-                  <Heart className="h-5 w-5 text-gray-600" />
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#743181] text-white text-xs rounded-full flex items-center justify-center">0</span>
-                </Button>
-              </Link>
-
-              <CartBadge />
-
-              <MobileMenu />
-
-              <Link href="/login" className="hidden lg:inline-block">
-                <Button variant="ghost" size="icon">
-                  <User className="h-5 w-5 text-gray-600" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
 
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-white to-pink-50">

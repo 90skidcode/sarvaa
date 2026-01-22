@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { auth } from '@/lib/firebase'
 import { ConfirmationResult, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth'
-import { ArrowLeft, Phone } from 'lucide-react'
+import { Phone } from 'lucide-react'
 import Link from 'next/link'
 import { KeyboardEvent, useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -176,10 +176,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 py-12 px-4">
       <div className="container mx-auto max-w-md">
         {/* Back Button */}
-        <Link href="/" className="inline-flex items-center text-[#743181] hover:text-[#5a2a6e] font-medium mb-6">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Home
-        </Link>
+
 
         {/* Main Card */}
         <Card className="shadow-2xl border-purple-100">

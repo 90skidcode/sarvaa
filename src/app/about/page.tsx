@@ -3,7 +3,7 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { ArrowLeft, Award, Clock, Heart, Sparkles, Users } from 'lucide-react'
+import { Award, Clock, Heart, Sparkles, Users } from 'lucide-react'
 import Link from 'next/link'
 
 export default function AboutPage() {
@@ -12,10 +12,7 @@ export default function AboutPage() {
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-[#743181] to-[#5a2a6e] text-white py-16">
         <div className="container mx-auto px-4">
-          <Link href="/" className="inline-flex items-center text-white/80 hover:text-white font-medium mb-6">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Home
-          </Link>
+
           <h1 className="text-5xl font-bold mb-4">About Sarvaa Sweets</h1>
           <p className="text-xl text-white/90 max-w-2xl">
             Preserving the rich heritage of Tamil Nadu's traditional sweets for over three generations

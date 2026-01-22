@@ -1,12 +1,11 @@
 'use client'
 
 import { QuantityControl } from '@/components/QuantityControl'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { WeightOption, WeightSelector } from '@/components/WeightSelector'
 import { useCartStore } from '@/lib/store'
-import { ShoppingCart, Star } from 'lucide-react'
+import { ShoppingCart } from 'lucide-react'
 import Image from 'next/image'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
@@ -101,82 +100,91 @@ export function ProductCard({
   }
 
   return (
-    <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300">
-      <CardContent className="p-0">
-        {/* Image */}
-        <div className="relative h-64 overflow-hidden">
+    <Card className="group overflow-hidden rounded-[2rem] border-none bg-white shadow-lg hover:shadow-2xl transition-all duration-500 flex flex-col h-full py-0">
+      <CardContent className="p-0 flex flex-col h-full">
+        {/* Image Section */}
+        <div className="relative aspect-[4/3] overflow-hidden">
           <Image
             src={image}
             alt={name}
             fill
-            className="object-cover group-hover:scale-110 transition-transform duration-300"
+            className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
+          <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-500" />
+          
           {badge && (
-            <Badge className="absolute top-4 left-4 bg-[#743181] text-white">
-              {badge}
-            </Badge>
+            <div className="absolute top-4 left-4 z-10">
+              <span className="bg-[#743181] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
+                {badge}
+              </span>
+            </div>
           )}
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-4">
-          {/* Title & Rating */}
-          <div>
-            <h3 className="text-lg font-bold text-gray-900 mb-1">{name}</h3>
-            <p className="text-sm text-gray-600 line-clamp-2">{description}</p>
-            {reviews > 0 && (
-              <div className="flex items-center gap-2 mt-2">
-                <div className="flex items-center">
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span className="text-sm font-medium ml-1">{rating}</span>
+        {/* Content Section */}
+        <div className="px-6 pb-6 pt-2 flex flex-col flex-grow space-y-4">
+          {/* Header: Name & Description */}
+          <div className="space-y-1">
+            <h3 className="text-xl font-extrabold text-[#1a1a1a] tracking-tight group-hover:text-[#743181] transition-colors line-clamp-1">
+              {name}
+            </h3>
+            <p className="text-sm font-medium text-gray-500 line-clamp-2 leading-relaxed h-10">
+              {description}
+            </p>
+          </div>
+
+          <div className="pt-2 space-y-4 mt-auto">
+            {/* Action Bar: Weight & Price */}
+            <div className="space-y-4">
+              {weightOptions.length > 0 && (
+                <WeightSelector
+                  weights={weightOptions}
+                  selectedWeight={selectedWeight}
+                  onWeightChange={setSelectedWeight}
+                  className="w-full"
+                />
+              )}
+
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-black text-[#743181]">
+                      ₹{variantData.price}
+                    </span>
+                    {weightOptions.length === 0 && (
+                      <span className="text-xs font-bold text-gray-400 uppercase tracking-tighter">/ pack</span>
+                    )}
+                  </div>
                 </div>
-                <span className="text-xs text-gray-500">({reviews} reviews)</span>
+                
+                <QuantityControl
+                  quantity={quantity}
+                  onQuantityChange={setQuantity}
+                  max={Math.min(stock, 99)}
+                />
+              </div>
+            </div>
+
+            {/* CTA Button */}
+            <Button
+              onClick={handleAddToCart}
+              disabled={stock === 0}
+              className="w-full h-14 rounded-2xl bg-[#743181] hover:bg-[#5a2a6e] text-white font-bold text-base shadow-lg shadow-purple-100 transition-all hover:-translate-y-1 active:scale-[0.98] group/btn"
+            >
+              <ShoppingCart className="h-5 w-5 mr-2 transition-transform group-hover/btn:-rotate-12" />
+              {stock === 0 ? 'Fresh out!' : 'Add to Cart'}
+            </Button>
+
+            {stock > 0 && stock <= 5 && (
+              <div className="flex items-center justify-center gap-1.5 animate-pulse">
+                <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest">
+                  Rare Find: Only {stock} left
+                </p>
               </div>
             )}
           </div>
-
-          {/* Weight Selector */}
-          {weightOptions.length > 0 && (
-            <WeightSelector
-              weights={weightOptions}
-              selectedWeight={selectedWeight}
-              onWeightChange={setSelectedWeight}
-              className="w-full"
-            />
-          )}
-
-          {/* Price & Quantity */}
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-2xl font-bold text-[#743181]">
-                ₹{variantData.price}
-              </span>
-              {weightOptions.length === 0 && (
-                <span className="text-sm text-gray-500 ml-2">/ pack</span>
-              )}
-            </div>
-            <QuantityControl
-              quantity={quantity}
-              onQuantityChange={setQuantity}
-              max={Math.min(stock, 99)}
-            />
-          </div>
-
-          {/* Add to Cart Button */}
-          <Button
-            onClick={handleAddToCart}
-            disabled={stock === 0}
-            className="w-full bg-gradient-to-r from-[#743181] to-[#5a2a6e] hover:from-[#5a2a6e] hover:to-[#743181] text-white"
-          >
-            <ShoppingCart className="h-4 w-4 mr-2" />
-            {stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-          </Button>
-
-          {stock > 0 && stock <= 5 && (
-            <p className="text-xs text-orange-600 text-center">
-              Only {stock} left in stock!
-            </p>
-          )}
         </div>
       </CardContent>
     </Card>

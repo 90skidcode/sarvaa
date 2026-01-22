@@ -22,7 +22,7 @@ export function WeightSelector({ weights, selectedWeight, onWeightChange, classN
 
   return (
     <Select value={selectedWeight} onValueChange={onWeightChange}>
-      <SelectTrigger className={className}>
+      <SelectTrigger className={`bg-gray-50/50 border-gray-100 rounded-xl h-11 focus:ring-[#743181]/20 ${className}`}>
         <SelectValue placeholder="Select variant" />
       </SelectTrigger>
       <SelectContent>

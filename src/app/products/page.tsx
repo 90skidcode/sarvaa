@@ -3,8 +3,7 @@
 import { ProductCard } from '@/components/ProductCard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Filter, Search } from 'lucide-react'
-import Link from 'next/link'
+import { Filter, Search } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -86,10 +85,7 @@ export default function ProductsPage() {
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/" className="inline-flex items-center text-[#743181] hover:text-[#5a2a6e] font-medium mb-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Home
-          </Link>
+
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Tamil Sweets Collection</h1>
           <p className="text-lg text-gray-600">
             Discover our authentic Tamil Nadu sweets, handcrafted with pure ghee and traditional recipes

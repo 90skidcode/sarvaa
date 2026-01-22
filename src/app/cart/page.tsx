@@ -5,7 +5,7 @@ import { QuantityControl } from '@/components/QuantityControl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useCartStore } from '@/lib/store'
-import { ArrowLeft, ShoppingBag, Trash2 } from 'lucide-react'
+import { ShoppingBag, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -37,12 +37,7 @@ export default function CartPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
-        <div className="mb-6">
-          <Link href="/products" className="inline-flex items-center text-[#743181] hover:text-[#5a2a6e] font-medium">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Continue Shopping
-          </Link>
-        </div>
+
 
         <h1 className="text-4xl font-bold text-gray-900 mb-8">Shopping Cart</h1>
 
