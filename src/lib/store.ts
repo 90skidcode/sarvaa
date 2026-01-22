@@ -2,7 +2,8 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 export interface WeightOption {
-  weight: string;
+  type: string; // e.g., "Grams", "Pieces"
+  value: string; // e.g., "250", "1"
   price: number;
 }
 
@@ -13,19 +14,33 @@ export interface CartItem {
   image: string;
   price: number;
   quantity: number;
-  weight: string;
+  variantType: string;
+  variantValue: string;
   maxStock: number;
 }
 
 interface CartStore {
   items: CartItem[];
   addItem: (item: Omit<CartItem, "id">) => void;
-  removeItem: (productId: string, weight: string) => void;
-  updateQuantity: (productId: string, weight: string, quantity: number) => void;
+  removeItem: (
+    productId: string,
+    variantType: string,
+    variantValue: string,
+  ) => void;
+  updateQuantity: (
+    productId: string,
+    variantType: string,
+    variantValue: string,
+    quantity: number,
+  ) => void;
   clearCart: () => void;
   getItemCount: () => number;
   getSubtotal: () => number;
-  getItem: (productId: string, weight: string) => CartItem | undefined;
+  getItem: (
+    productId: string,
+    variantType: string,
+    variantValue: string,
+  ) => CartItem | undefined;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -36,14 +51,19 @@ export const useCartStore = create<CartStore>()(
       addItem: (item) => {
         const items = get().items;
         const existingItem = items.find(
-          (i) => i.productId === item.productId && i.weight === item.weight,
+          (i) =>
+            i.productId === item.productId &&
+            i.variantType === item.variantType &&
+            i.variantValue === item.variantValue,
         );
 
         if (existingItem) {
           // Update quantity if item already exists
           set({
             items: items.map((i) =>
-              i.productId === item.productId && i.weight === item.weight
+              i.productId === item.productId &&
+              i.variantType === item.variantType &&
+              i.variantValue === item.variantValue
                 ? {
                     ...i,
                     quantity: Math.min(
@@ -61,30 +81,37 @@ export const useCartStore = create<CartStore>()(
               ...items,
               {
                 ...item,
-                id: `${item.productId}-${item.weight}-${Date.now()}`,
+                id: `${item.productId}-${item.variantType}-${item.variantValue}-${Date.now()}`,
               },
             ],
           });
         }
       },
 
-      removeItem: (productId, weight) => {
+      removeItem: (productId, variantType, variantValue) => {
         set({
           items: get().items.filter(
-            (item) => !(item.productId === productId && item.weight === weight),
+            (item) =>
+              !(
+                item.productId === productId &&
+                item.variantType === variantType &&
+                item.variantValue === variantValue
+              ),
           ),
         });
       },
 
-      updateQuantity: (productId, weight, quantity) => {
+      updateQuantity: (productId, variantType, variantValue, quantity) => {
         if (quantity <= 0) {
-          get().removeItem(productId, weight);
+          get().removeItem(productId, variantType, variantValue);
           return;
         }
 
         set({
           items: get().items.map((item) =>
-            item.productId === productId && item.weight === weight
+            item.productId === productId &&
+            item.variantType === variantType &&
+            item.variantValue === variantValue
               ? { ...item, quantity: Math.min(quantity, item.maxStock) }
               : item,
           ),
@@ -106,9 +133,12 @@ export const useCartStore = create<CartStore>()(
         );
       },
 
-      getItem: (productId, weight) => {
+      getItem: (productId, variantType, variantValue) => {
         return get().items.find(
-          (item) => item.productId === productId && item.weight === weight,
+          (item) =>
+            item.productId === productId &&
+            item.variantType === variantType &&
+            item.variantValue === variantValue,
         );
       },
     }),

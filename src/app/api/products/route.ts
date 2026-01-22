@@ -81,6 +81,7 @@ export async function POST(request: NextRequest) {
       featured,
       isActive,
       categoryId,
+      weights,
     } = body;
 
     if (!name || !slug || !description || !price || !image || !categoryId) {
@@ -99,7 +100,13 @@ export async function POST(request: NextRequest) {
         image,
         stock: Number.parseInt(stock) || 0,
         featured: featured || false,
-        isActive: isActive !== undefined ? isActive : true,
+        isActive: typeof isActive === "boolean" ? isActive : true,
+        weights: (function () {
+          if (!weights) return null;
+          return typeof weights === "string"
+            ? weights
+            : JSON.stringify(weights);
+        })(),
         categoryId,
       },
       include: {
@@ -108,10 +115,14 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ product }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating product:", error);
     return NextResponse.json(
-      { error: "Failed to create product" },
+      {
+        error: "Failed to create product",
+        message: error.message,
+        details: error.code,
+      },
       { status: 500 },
     );
   }

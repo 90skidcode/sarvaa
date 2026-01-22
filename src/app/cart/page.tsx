@@ -66,22 +66,22 @@ export default function CartPage() {
                       <div className="flex justify-between items-start mb-2">
                         <div>
                           <h3 className="text-lg font-bold text-gray-900">{item.name}</h3>
-                          <p className="text-sm text-gray-500">Weight: {item.weight}</p>
+                          <p className="text-sm text-gray-500">
+                             Variant: {item.variantValue} {item.variantType === 'Default' ? '' : item.variantType}
+                          </p>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeItem(item.productId, item.weight)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        <button
+                          onClick={() => removeItem(item.productId, item.variantType, item.variantValue)}
+                          className="text-red-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition-colors"
                         >
                           <Trash2 className="h-5 w-5" />
-                        </Button>
+                        </button>
                       </div>
 
                       <div className="flex items-center justify-between mt-4">
                         <QuantityControl
                           quantity={item.quantity}
-                          onQuantityChange={(qty) => updateQuantity(item.productId, item.weight, qty)}
+                          onQuantityChange={(qty) => updateQuantity(item.productId, item.variantType, item.variantValue, qty)}
                           max={item.maxStock}
                         />
                         <div className="text-right">
@@ -101,7 +101,7 @@ export default function CartPage() {
               <Button
                 variant="outline"
                 onClick={clearCart}
-                className="text-red-500 border-red-300 hover:bg-red-50"
+                className="text-red-500 border-red-300 hover:bg-red-50 px-6"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Clear Cart
@@ -111,7 +111,7 @@ export default function CartPage() {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-4">
+            <Card className="sticky top-4 border-none shadow-lg">
               <CardContent className="p-6">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Order Summary</h2>
 
@@ -126,14 +126,14 @@ export default function CartPage() {
                     <span>Shipping</span>
                     <span className="font-medium">
                       {subtotal >= 999 ? (
-                        <span className="text-green-600">FREE</span>
+                        <span className="text-emerald-600 font-bold">FREE</span>
                       ) : (
                         '₹50.00'
                       )}
                     </span>
                   </div>
-                  <div className="border-t pt-3">
-                    <div className="flex justify-between text-lg font-bold">
+                  <div className="border-t pt-3 mt-4">
+                    <div className="flex justify-between text-xl font-bold text-gray-900">
                       <span>Total</span>
                       <span className="text-[#743181]">
                         ₹{(subtotal + (subtotal >= 999 ? 0 : 50)).toFixed(2)}
@@ -143,13 +143,13 @@ export default function CartPage() {
                 </div>
 
                 <Link href="/checkout">
-                  <Button className="w-full bg-gradient-to-r from-[#743181] to-[#5a2a6e] hover:from-[#5a2a6e] hover:to-[#743181] py-6 text-lg">
+                  <Button className="w-full bg-gradient-to-r from-[#743181] to-[#5a2a6e] hover:from-[#5a2a6e] hover:to-[#743181] py-8 text-lg font-bold shadow-lg shadow-purple-200">
                     Proceed to Checkout
                   </Button>
                 </Link>
 
-                <p className="text-xs text-gray-500 text-center mt-4">
-                  Taxes calculated at checkout
+                <p className="text-xs text-gray-400 text-center mt-6">
+                  Secure Checkout • Premium Quality Guaranteed
                 </p>
               </CardContent>
             </Card>

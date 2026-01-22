@@ -8,7 +8,7 @@ import { WeightOption, WeightSelector } from '@/components/WeightSelector'
 import { useCartStore } from '@/lib/store'
 import { ShoppingCart, Star } from 'lucide-react'
 import Image from 'next/image'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
 interface ProductCardProps {
@@ -44,27 +44,40 @@ export function ProductCard({
   const weightOptions: WeightOption[] = useMemo(() => {
     if (!weights) return []
     try {
-      return JSON.parse(weights) as WeightOption[]
+      const parsed = JSON.parse(weights);
+      // Support both old and new format for backward compatibility
+      return parsed.map((w: any) => ({
+        type: w.type || 'Weight',
+        value: (w.value || w.weight || '').toString(),
+        price: Number(w.price)
+      })) as WeightOption[]
     } catch {
       return []
     }
   }, [weights])
 
-  // Initialize selected weight with first option or use base price
-  useMemo(() => {
+  // Initialize selected weight
+  useEffect(() => {
     if (weightOptions.length > 0 && !selectedWeight) {
-      setSelectedWeight(weightOptions[0].weight)
-    } else if (!selectedWeight) {
-      setSelectedWeight('default')
+      const first = weightOptions[0];
+      setSelectedWeight(`${first.type}:${first.value}`);
+    } else if (weightOptions.length === 0 && !selectedWeight) {
+      setSelectedWeight('Default:Pack');
     }
   }, [weightOptions, selectedWeight])
 
-  // Get current price based on selected weight
-  const currentPrice = useMemo(() => {
-    if (weightOptions.length === 0) return price
+  // Get current price and display label based on selected weight
+  const variantData = useMemo(() => {
+    if (weightOptions.length === 0) return { price, type: 'Default', value: 'Pack' }
     
-    const selectedOption = weightOptions.find((w) => w.weight === selectedWeight)
-    return selectedOption?.price || price
+    const [type, value] = selectedWeight.split(':');
+    const selectedOption = weightOptions.find((w) => w.type === type && w.value === value)
+    
+    return {
+      price: selectedOption?.price || price,
+      type: selectedOption?.type || type,
+      value: selectedOption?.value || value
+    }
   }, [selectedWeight, weightOptions, price])
 
   const handleAddToCart = () => {
@@ -72,17 +85,18 @@ export function ProductCard({
       productId: id,
       name,
       image,
-      price: currentPrice,
+      price: variantData.price,
       quantity,
-      weight: selectedWeight,
+      variantType: variantData.type,
+      variantValue: variantData.value,
       maxStock: stock
     })
     
-    toast.success(`Added ${quantity}x ${name} (${selectedWeight}) to cart!`, {
-      description: `₹${(currentPrice * quantity).toFixed(2)}`
+    const label = variantData.type === 'Default' ? '' : ` (${variantData.value} ${variantData.type})`
+    toast.success(`Added ${quantity}x ${name}${label} to cart!`, {
+      description: `₹${(variantData.price * quantity).toFixed(2)}`
     })
     
-    // Reset quantity after adding
     setQuantity(1)
   }
 
@@ -133,9 +147,9 @@ export function ProductCard({
 
           {/* Price & Quantity */}
           <div className="flex items-center justify-between">
-<div>
+            <div>
               <span className="text-2xl font-bold text-[#743181]">
-                ₹{currentPrice}
+                ₹{variantData.price}
               </span>
               {weightOptions.length === 0 && (
                 <span className="text-sm text-gray-500 ml-2">/ pack</span>

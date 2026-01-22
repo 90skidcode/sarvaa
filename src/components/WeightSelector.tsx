@@ -3,13 +3,14 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 export interface WeightOption {
-  weight: string
+  type: string
+  value: string
   price: number
 }
 
 interface WeightSelectorProps {
   weights: WeightOption[]
-  selectedWeight: string
+  selectedWeight: string // format "type:value"
   onWeightChange: (weight: string) => void
   className?: string
 }
@@ -22,14 +23,19 @@ export function WeightSelector({ weights, selectedWeight, onWeightChange, classN
   return (
     <Select value={selectedWeight} onValueChange={onWeightChange}>
       <SelectTrigger className={className}>
-        <SelectValue placeholder="Select weight" />
+        <SelectValue placeholder="Select variant" />
       </SelectTrigger>
       <SelectContent>
-        {weights.map((option) => (
-          <SelectItem key={option.weight} value={option.weight}>
-            {option.weight} - ₹{option.price}
-          </SelectItem>
-        ))}
+        {weights.map((option) => {
+          const key = `${option.type}:${option.value}`;
+          // Display format: "250 Grams" or "1 Pieces"
+          const label = `${option.value} ${option.type}`;
+          return (
+            <SelectItem key={key} value={key}>
+              {label} - ₹{option.price}
+            </SelectItem>
+          );
+        })}
       </SelectContent>
     </Select>
   )

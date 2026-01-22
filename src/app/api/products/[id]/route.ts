@@ -54,6 +54,7 @@ export async function PUT(
       featured,
       isActive,
       categoryId,
+      weights,
     } = body;
 
     const product = await db.product.update({
@@ -68,6 +69,14 @@ export async function PUT(
         ...(featured !== undefined && { featured }),
         ...(isActive !== undefined && { isActive }),
         ...(categoryId && { categoryId }),
+        ...(weights !== undefined && {
+          weights: (function () {
+            if (!weights) return null;
+            return typeof weights === "string"
+              ? weights
+              : JSON.stringify(weights);
+          })(),
+        }),
       },
       include: {
         category: true,
@@ -75,10 +84,14 @@ export async function PUT(
     });
 
     return NextResponse.json({ product });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error updating product:", error);
     return NextResponse.json(
-      { error: "Failed to update product" },
+      {
+        error: "Failed to update product",
+        message: error.message,
+        details: error.code,
+      },
       { status: 500 },
     );
   }

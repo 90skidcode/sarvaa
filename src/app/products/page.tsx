@@ -71,7 +71,7 @@ export default function ProductsPage() {
       
       const response = await fetch(url)
       const data = await response.json()
-      setAllProducts(data)
+      setAllProducts(data.products || [])
     } catch (error) {
       console.error('Error fetching products:', error)
     } finally {
@@ -113,11 +113,11 @@ export default function ProductsPage() {
                   onChange={(e) => {
                     const query = e.target.value
                     if (query) {
-                      window.history.pushState({}, '', `/products?search=${encodeURIComponent(query)}`)
+                      globalThis.history.pushState({}, '', `/products?search=${encodeURIComponent(query)}`)
                     } else {
-                      window.history.pushState({}, '', '/products')
+                      globalThis.history.pushState({}, '', '/products')
                     }
-                    window.dispatchEvent(new PopStateEvent('popstate'))
+                    globalThis.dispatchEvent(new PopStateEvent('popstate'))
                   }}
                   placeholder="Search by name, description..."
                   className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#743181] focus:border-transparent text-base"
@@ -132,21 +132,24 @@ export default function ProductsPage() {
                 <h2 className="text-lg font-semibold text-gray-900">Filter by Category</h2>
               </div>
               <div className="flex flex-wrap gap-2">
-                {FILTER_CATEGORIES.map((category) => (
-                  <Button
-                    key={category.value}
-                    variant={activeFilter === category.value ? 'default' : 'outline'}
-                    onClick={() => setActiveFilter(category.value)}
-                    size="sm"
-                    className={
-                      activeFilter === category.value
-                        ? 'bg-gradient-to-r from-[#743181] to-[#5a2a6e] text-white'
-                        : 'border-gray-300 text-gray-700 hover:border-[#743181] hover:text-[#743181]'
-                    }
-                  >
-                    {category.label}
-                  </Button>
-                ))}
+                {FILTER_CATEGORIES.map((category) => {
+                  const isactive = activeFilter === category.value
+                  return (
+                    <Button
+                      key={`filter-${category.value}`}
+                      variant={isactive ? 'default' : 'outline'}
+                      onClick={() => setActiveFilter(category.value)}
+                      size="sm"
+                      className={
+                        isactive
+                          ? 'bg-gradient-to-r from-[#743181] to-[#5a2a6e] text-white'
+                          : 'border-gray-300 text-gray-700 hover:border-[#743181] hover:text-[#743181]'
+                      }
+                    >
+                      {category.label}
+                    </Button>
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -164,8 +167,8 @@ export default function ProductsPage() {
               </div>
               <button
                 onClick={() => {
-                  window.history.pushState({}, '', '/products')
-                  window.dispatchEvent(new PopStateEvent('popstate'))
+                  globalThis.history.pushState({}, '', '/products')
+                  globalThis.dispatchEvent(new PopStateEvent('popstate'))
                 }}
                 className="text-sm text-gray-600 hover:text-[#743181] underline"
               >
@@ -176,17 +179,21 @@ export default function ProductsPage() {
         )}
 
         {/* Products Grid */}
-        {loading ? (
+        {loading && (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-lg h-96 animate-pulse" />
+              <div key={`product-skeleton-${i+1}`} className="bg-white rounded-lg h-96 animate-pulse" />
             ))}
           </div>
-        ) : products.length === 0 ? (
+        )}
+
+        {!loading && products.length === 0 && (
           <div className="text-center py-16">
             <p className="text-xl text-gray-600">No products found in this category.</p>
           </div>
-        ) : (
+        )}
+
+        {!loading && products.length > 0 && (
           <>
             <div className="mb-4 flex items-center justify-between">
               <p className="text-gray-600">

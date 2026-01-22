@@ -2,11 +2,11 @@
 
 import { CartBadge } from '@/components/CartBadge'
 import { MobileMenu } from '@/components/MobileMenu'
+import { ProductCard } from '@/components/ProductCard'
 import { SearchBar } from '@/components/SearchBar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Award, ChevronRight, Clock, Heart, ShoppingCart, Sparkles, Star, Truck, User } from 'lucide-react'
+import { Award, ChevronRight, Clock, Heart, Sparkles, Star, Truck, User } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
@@ -20,6 +20,7 @@ interface Product {
   stock: number
   featured: boolean
   categoryId: string
+  weights?: string | null
   rating?: number
   reviews?: number
   badge?: string
@@ -115,16 +116,13 @@ export default function Home() {
 
             <nav className="hidden lg:flex items-center gap-8">
               <Link href="/" className="text-gray-700 hover:text-[#743181] font-medium transition-colors relative group">
-                Home
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#743181] transition-all group-hover:w-full"></span>
+                Home<span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#743181] transition-all group-hover:w-full"></span>
               </Link>
               <Link href="/products" className="text-gray-700 hover:text-[#743181] font-medium transition-colors relative group">
-                Shop Sweets
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#743181] transition-all group-hover:w-full"></span>
+                Shop Sweets<span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#743181] transition-all group-hover:w-full"></span>
               </Link>
               <Link href="/contact" className="text-gray-700 hover:text-[#743181] font-medium transition-colors relative group">
-                Contact
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#743181] transition-all group-hover:w-full"></span>
+                Contact<span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#743181] transition-all group-hover:w-full"></span>
               </Link>
             </nav>
 
@@ -228,32 +226,35 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            {loading ? (
-              [...Array(6)].map((_, i) => (
-                <div key={i} className="animate-pulse bg-purple-50 rounded-2xl p-4 h-48"></div>
-              ))
-            ) : categories.length === 0 ? (
-              <p className="col-span-full text-center text-gray-500">No categories found</p>
-            ) : categories.map((category) => (
-              <Link key={category.id} href={`/products?category=${category.slug}`} className="group relative block transition-all hover:-translate-y-2">
-                <div className="relative aspect-square rounded-2xl overflow-hidden shadow-lg shadow-purple-200">
-                  <img
-                    src={category.image || 'https://images.unsplash.com/photo-1606858265218-4e4b7927c668?w=400&q=80'}
-                    alt={category.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <p className="text-white font-bold text-lg leading-tight group-hover:text-purple-200 transition-colors">
-                      {category.name}
-                    </p>
-                    <p className="text-purple-200 text-xs mt-1">
-                      {category._count?.products || 0} Specialities
-                    </p>
-                  </div>
-                </div>
-              </Link>
+            {loading && Array.from({ length: 6 }).map((_, i) => (
+              <div key={`category-skeleton-${i+1}`} className="animate-pulse bg-purple-50 rounded-2xl p-4 h-48"></div>
             ))}
+            
+            {!loading && categories.length === 0 && (
+              <p className="col-span-full text-center text-gray-500 font-medium">No specialized collections found today</p>
+            )}
+            
+            {!loading && categories.length > 0 && categories.map((category) => (
+                <Link key={category.id} href={`/products?category=${category.slug}`} className="group relative block transition-all hover:-translate-y-2">
+                  <div className="relative aspect-square rounded-2xl overflow-hidden shadow-lg shadow-purple-200">
+                    <img
+                      src={category.image || 'https://images.unsplash.com/photo-1606858265218-4e4b7927c668?w=400&q=80'}
+                      alt={category.name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <p className="text-white font-bold text-lg leading-tight group-hover:text-purple-200 transition-colors">
+                        {category.name}
+                      </p>
+                      <p className="text-purple-200 text-xs mt-1">
+                        {category._count?.products || 0} Specialities
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            }
           </div>
         </div>
       </section>
@@ -273,61 +274,30 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {loading ? (
-              [...Array(3)].map((_, i) => (
-                <div key={i} className="animate-pulse bg-purple-50 rounded-2xl h-[450px]"></div>
-              ))
-            ) : featuredProducts.length === 0 ? (
-              <p className="col-span-full text-center text-gray-500">No featured products found</p>
-            ) : featuredProducts.map((product) => (
-              <Card key={product.id} className="group overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl">
-                <CardContent className="p-0">
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                    {product.badge && (
-                      <div className="absolute top-4 left-4">
-                        <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 border-none shadow-lg">
-                          {product.badge}
-                        </Badge>
-                      </div>
-                    )}
-                    <button className="absolute top-4 right-4 p-2 rounded-full bg-white/80 backdrop-blur-sm text-[#743181] hover:bg-white transition-colors opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 duration-300 shadow-md">
-                      <Heart className="h-5 w-5" />
-                    </button>
-                  </div>
-                  <div className="p-6">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-xl font-bold text-gray-900 group-hover:text-[#743181] transition-colors">{product.name}</h3>
-                    </div>
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                      {product.description}
-                    </p>
-                    <div className="flex items-center gap-4 mb-6">
-                      <div className="flex items-center">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className={`h-4 w-4 ${i < Math.floor(product.rating || 5) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} />
-                        ))}
-                      </div>
-                      <span className="text-sm font-medium text-gray-600">{product.rating ? product.rating.toFixed(1) : '5.0'}</span>
-                      <span className="text-sm text-gray-400">({product.reviews || 0})</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl font-bold text-[#743181]">₹{product.price}</span>
-                      </div>
-                      <Button size="sm" className="bg-gradient-to-r from-[#743181] to-[#5a2a6e] hover:from-[#5a2a6e] hover:to-[#743181]">
-                        <ShoppingCart className="h-4 w-4 mr-2" />
-                        Add
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            {loading && Array.from({ length: 3 }).map((_, i) => (
+              <div key={`product-skeleton-${i+1}`} className="animate-pulse bg-purple-50 rounded-2xl h-[450px]"></div>
             ))}
+            
+            {!loading && featuredProducts.length === 0 && (
+              <p className="col-span-full text-center text-gray-500 font-medium">No featured products found</p>
+            )}
+            
+            {!loading && featuredProducts.length > 0 && featuredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  name={product.name}
+                  description={product.description}
+                  price={product.price}
+                  image={product.image}
+                  stock={product.stock}
+                  weights={product.weights}
+                  badge={product.badge}
+                  rating={product.rating}
+                  reviews={product.reviews}
+                />
+              ))
+            }
           </div>
         </div>
       </section>
