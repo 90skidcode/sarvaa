@@ -4,7 +4,7 @@ import { CustomCakeSection } from '@/components/CustomCakeSection'
 import { HeroBannerSlider } from '@/components/HeroBannerSlider'
 import { ProductCard } from '@/components/ProductCard'
 import { Badge } from '@/components/ui/badge'
-import { Award, ChevronRight, Clock, Star, Truck } from 'lucide-react'
+import { Award, ChevronRight, Clock, Star } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
@@ -210,9 +210,9 @@ export default function Home() {
                 description: 'Every sweet is made fresh daily following traditional recipes'
               },
               {
-                icon: <Truck className="h-8 w-8" />,
-                title: 'Express Delivery',
-                description: 'Same-day delivery across major Indian cities'
+                icon: <Award className="h-8 w-8" />,
+                title: 'Store Pickup',
+                description: 'Quick pickup from our store locations across Tamil Nadu'
               },
               {
                 icon: <Star className="h-8 w-8" />,

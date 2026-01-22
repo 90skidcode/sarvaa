@@ -1,11 +1,10 @@
 'use client'
 
-import { FreeShippingProgress } from '@/components/FreeShippingProgress'
 import { QuantityControl } from '@/components/QuantityControl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useCartStore } from '@/lib/store'
-import { ShoppingBag, Trash2 } from 'lucide-react'
+import { ShoppingBag, Store, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -110,7 +109,16 @@ export default function CartPage() {
               <CardContent className="p-6">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Order Summary</h2>
 
-                <FreeShippingProgress />
+                {/* Pickup Info */}
+                <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 mb-6">
+                  <div className="flex items-center gap-3 text-[#743181]">
+                    <Store className="h-5 w-5" />
+                    <div>
+                      <p className="font-bold text-sm">Store Pickup Only</p>
+                      <p className="text-xs text-purple-600/70">Free pickup from our stores</p>
+                    </div>
+                  </div>
+                </div>
 
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between text-gray-600">
@@ -118,20 +126,14 @@ export default function CartPage() {
                     <span className="font-medium">₹{subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-gray-600">
-                    <span>Shipping</span>
-                    <span className="font-medium">
-                      {subtotal >= 999 ? (
-                        <span className="text-emerald-600 font-bold">FREE</span>
-                      ) : (
-                        '₹50.00'
-                      )}
-                    </span>
+                    <span>Pickup</span>
+                    <span className="text-emerald-600 font-bold">FREE</span>
                   </div>
                   <div className="border-t pt-3 mt-4">
                     <div className="flex justify-between text-xl font-bold text-gray-900">
                       <span>Total</span>
                       <span className="text-[#743181]">
-                        ₹{(subtotal + (subtotal >= 999 ? 0 : 50)).toFixed(2)}
+                        ₹{subtotal.toFixed(2)}
                       </span>
                     </div>
                   </div>

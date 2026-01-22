@@ -2,7 +2,6 @@
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -84,7 +83,7 @@ export function CustomCakeSection() {
               </div>
               
               <h2 className="text-5xl lg:text-6xl font-black text-gray-900 leading-tight">
-                Upload Your Design, <br />
+                Upload Your Cake Design, <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#743181] to-[#5a2a6e]">
                   We'll Bake the Magic.
                 </span>
@@ -123,7 +122,7 @@ export function CustomCakeSection() {
                 <CardContent className="p-8 lg:p-10">
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-4">
-                      <Label className="text-gray-900 font-bold text-lg">Upload Your Design Photo</Label>
+                      <Label className="text-gray-900 font-bold text-lg">Upload Your Cake Design Photo</Label>
                       <div 
                         className={`relative group cursor-pointer border-2 border-dashed rounded-3xl p-8 transition-all ${
                           previewUrl ? 'border-[#743181] bg-purple-50/30' : 'border-gray-200 hover:border-[#743181] hover:bg-purple-50/50'
@@ -228,7 +227,7 @@ export function CustomCakeSection() {
                     </Button>
                     
                     <p className="text-center text-xs text-gray-400 font-medium tracking-wide">
-                      * OUR CHEFS WILL CALL YOU TO FINALIZE PRICING AND DELIVERY
+                      * OUR CHEFS WILL CALL YOU TO FINALIZE PRICING AND PICKUP
                     </p>
                   </form>
                 </CardContent>

@@ -4,11 +4,11 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { getCurrentUser } from '@/lib/api-client'
-import { useCartStore, useSettingsStore } from '@/lib/store'
-import { ArrowLeft, CheckCircle2, Package, Store, Truck, User } from 'lucide-react'
+import { useCartStore } from '@/lib/store'
+import { ArrowLeft, CheckCircle2, Store, User } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 interface StoreLocation {
@@ -23,10 +23,8 @@ interface StoreLocation {
 export default function CheckoutPage() {
   const router = useRouter()
   const { items, getSubtotal, clearCart } = useCartStore()
-  const { freeShippingThreshold } = useSettingsStore()
   
   const [loading, setLoading] = useState(false)
-  const [orderType, setOrderType] = useState<'takeaway' | 'delivery'>('takeaway')
   const [stores, setStores] = useState<StoreLocation[]>([])
   const [loadingStores, setLoadingStores] = useState(true)
   
@@ -35,11 +33,6 @@ export default function CheckoutPage() {
     name: '',
     email: '',
     phone: '',
-    address: '',
-    city: '',
-    state: 'Tamil Nadu',
-    pincode: '',
-    paymentMethod: 'phonepe',
     selectedStore: ''
   })
 
@@ -77,13 +70,7 @@ export default function CheckoutPage() {
   }
 
   const cartTotal = getSubtotal()
-  
-  const shipping = useMemo(() => {
-    if (orderType !== 'delivery') return 0;
-    return cartTotal >= freeShippingThreshold ? 0 : 50;
-  }, [orderType, cartTotal, freeShippingThreshold]);
-
-  const grandTotal = cartTotal + shipping
+  const grandTotal = cartTotal // No shipping for takeaway
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData(prev => ({
@@ -104,7 +91,7 @@ export default function CheckoutPage() {
         return
       }
 
-      if (orderType === 'takeaway' && !formData.selectedStore) {
+      if (!formData.selectedStore) {
         toast.error('Please select a store for pickup')
         setLoading(false)
         return
@@ -124,11 +111,10 @@ export default function CheckoutPage() {
           price: item.price
         })),
         customer: formData,
-        orderType: orderType,
-        storeId: orderType === 'takeaway' ? formData.selectedStore : null,
+        orderType: 'takeaway',
+        storeId: formData.selectedStore,
         total: grandTotal,
-        shipping: shipping,
-        paymentMethod: orderType === 'takeaway' ? 'cod' : formData.paymentMethod,
+        paymentMethod: 'cod',
         status: 'pending',
         createdAt: new Date().toISOString()
       }
@@ -142,13 +128,8 @@ export default function CheckoutPage() {
       clearCart()
 
       // Show success
-      let successMessage = 'Order placed successfully!'
-      if (orderType === 'takeaway') {
-        const storeName = stores.find(s => s.id === formData.selectedStore)?.name
-        successMessage = `Takeaway order confirmed! Pick up from ${storeName}`
-      }
-      
-      toast.success(successMessage, {
+      const storeName = stores.find(s => s.id === formData.selectedStore)?.name
+      toast.success(`Order confirmed! Pick up from ${storeName}`, {
         description: `Order total: ₹${grandTotal}. We'll contact you shortly.`
       })
 
@@ -177,152 +158,65 @@ export default function CheckoutPage() {
             Back to Cart
           </Link>
           <h1 className="text-4xl font-bold text-gray-900">Checkout</h1>
-          <p className="text-gray-600 mt-2">Complete your order</p>
+          <p className="text-gray-600 mt-2">Complete your order for store pickup</p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Left Column - Forms */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Order Type Selection */}
-            <Card className="border-none shadow-sm overflow-hidden">
-              <CardHeader className="bg-purple-50/50">
-                <CardTitle>How would you like to receive your order?</CardTitle>
+            {/* Store Selection */}
+            <Card className="border-none shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-[#743181]">
+                  <Store className="h-5 w-5" />
+                  Select Store for Pickup
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 pt-6">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <label
-                    htmlFor="order-takeaway"
-                    className={`flex items-center gap-4 p-5 border-2 rounded-2xl cursor-pointer transition-all ${
-                      orderType === 'takeaway'
-                        ? 'border-[#743181] bg-purple-50 shadow-inner'
-                        : 'border-gray-100 bg-white hover:border-purple-200'
-                    }`}
-                  >
-                    <input
-                      id="order-takeaway"
-                      type="radio"
-                      name="orderType"
-                      value="takeaway"
-                      checked={orderType === 'takeaway'}
-                      onChange={(e) => setOrderType(e.target.value as 'takeaway')}
-                      className="w-5 h-5 text-[#743181] focus:ring-[#743181]"
-                    />
-                    <div className="flex items-center gap-3">
-                        <div className={`p-3 rounded-full ${orderType === 'takeaway' ? 'bg-[#743181] text-white' : 'bg-gray-100 text-gray-400'}`}>
-                            <Store className="h-6 w-6" />
-                        </div>
-                        <div>
-                        <p className="font-bold text-gray-900">Self Pickup</p>
-                        <p className="text-xs text-gray-500">From our nearest store</p>
-                        </div>
-                    </div>
-                  </label>
-
-                  <label
-                    htmlFor="order-delivery"
-                    className={`flex items-center gap-4 p-5 border-2 rounded-2xl cursor-pointer transition-all ${
-                      orderType === 'delivery'
-                        ? 'border-[#743181] bg-purple-50 shadow-inner'
-                        : 'border-gray-100 bg-white hover:border-purple-200'
-                    }`}
-                  >
-                    <input
-                      id="order-delivery"
-                      type="radio"
-                      name="orderType"
-                      value="delivery"
-                      checked={orderType === 'delivery'}
-                      onChange={(e) => setOrderType(e.target.value as 'delivery')}
-                      className="w-5 h-5 text-[#743181] focus:ring-[#743181]"
-                    />
-                    <div className="flex items-center gap-3">
-                        <div className={`p-3 rounded-full ${orderType === 'delivery' ? 'bg-[#743181] text-white' : 'bg-gray-100 text-gray-400'}`}>
-                            <Truck className="h-6 w-6" />
-                        </div>
-                        <div>
-                        <p className="font-bold text-gray-900">Home Delivery</p>
-                        <p className="text-xs text-gray-500">Delivered to your door</p>
-                        </div>
-                    </div>
-                  </label>
-                </div>
-
-                {/* Delivery Not Available Message */}
-                {orderType === 'delivery' && (
-                  <div className="mt-4 p-5 bg-amber-50 border-2 border-amber-100 rounded-2xl animate-in fade-in slide-in-from-top-2">
-                    <div className="flex gap-4">
-                        <div className="bg-amber-100 p-2 rounded-full h-fit mt-1">
-                            <Package className="h-5 w-5 text-amber-600" />
-                        </div>
-                        <div>
-                            <p className="text-amber-900 font-bold">Delivery Currently Limited</p>
-                            <p className="text-sm text-amber-800/80 mt-1 leading-relaxed">
-                            We're sorry, but home delivery service is selectively available. 
-                            If you're in Coimbatore, please call us to check. Otherwise, 
-                            please select <strong>Takeaway</strong> for store pickup.
-                            </p>
-                        </div>
-                    </div>
+              <CardContent className="space-y-3">
+                {loadingStores ? (
+                  <div className="text-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-200 border-t-purple-600 mx-auto"></div>
+                      <p className="mt-4 text-gray-500 font-medium">Loading stores...</p>
+                  </div>
+                ) : stores.length === 0 ? (
+                  <div className="text-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                      <Store className="h-10 w-10 text-gray-300 mx-auto mb-2" />
+                      <p className="text-gray-500">No stores available for selection</p>
+                  </div>
+                ) : (
+                  <div className="grid md:grid-cols-2 gap-4">
+                      {stores.map((store) => (
+                          <label
+                          key={store.id}
+                          className={`flex gap-4 p-4 border-2 rounded-2xl cursor-pointer transition-all ${
+                              formData.selectedStore === store.id
+                              ? 'border-[#743181] bg-purple-50 shadow-md transform scale-[1.02]'
+                              : 'border-gray-50 bg-white hover:border-purple-200'
+                          }`}
+                          >
+                          <input
+                              type="radio"
+                              name="selectedStore"
+                              value={store.id}
+                              checked={formData.selectedStore === store.id}
+                              onChange={handleChange}
+                              className="w-5 h-5 mt-1 text-[#743181]"
+                          />
+                          <div className="flex-1">
+                              <p className="font-bold text-gray-900">{store.name}</p>
+                              <p className="text-sm text-gray-500 mt-1 leading-snug">{store.address}</p>
+                              {store.phone && (
+                              <p className="text-xs text-[#743181] font-bold mt-2 flex items-center gap-1">
+                                  <span className="opacity-50">Call:</span> {store.phone}
+                              </p>
+                              )}
+                          </div>
+                          </label>
+                      ))}
                   </div>
                 )}
               </CardContent>
             </Card>
-
-            {/* Store Selection (Only for Takeaway) */}
-            {orderType === 'takeaway' && (
-              <Card className="border-none shadow-sm animate-in fade-in slide-in-from-left-4">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-[#743181]">
-                    <Store className="h-5 w-5" />
-                    Select Store for Pickup
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {loadingStores ? (
-                    <div className="text-center py-12">
-                        <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-200 border-t-purple-600 mx-auto"></div>
-                        <p className="mt-4 text-gray-500 font-medium">Loading premium stores...</p>
-                    </div>
-                  ) : stores.length === 0 ? (
-                    <div className="text-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                        <Store className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-                        <p className="text-gray-500">No stores available for selection</p>
-                    </div>
-                  ) : (
-                    <div className="grid md:grid-cols-2 gap-4">
-                        {stores.map((store) => (
-                            <label
-                            key={store.id}
-                            className={`flex gap-4 p-4 border-2 rounded-2xl cursor-pointer transition-all ${
-                                formData.selectedStore === store.id
-                                ? 'border-[#743181] bg-purple-50 shadow-md transform scale-[1.02]'
-                                : 'border-gray-50 bg-white hover:border-purple-200'
-                            }`}
-                            >
-                            <input
-                                type="radio"
-                                name="selectedStore"
-                                value={store.id}
-                                checked={formData.selectedStore === store.id}
-                                onChange={handleChange}
-                                className="w-5 h-5 mt-1 text-[#743181]"
-                            />
-                            <div className="flex-1">
-                                <p className="font-bold text-gray-900">{store.name}</p>
-                                <p className="text-sm text-gray-500 mt-1 leading-snug">{store.address}</p>
-                                {store.phone && (
-                                <p className="text-xs text-[#743181] font-bold mt-2 flex items-center gap-1">
-                                    <span className="opacity-50">Call:</span> {store.phone}
-                                </p>
-                                )}
-                            </div>
-                            </label>
-                        ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
 
             {/* Contact Information */}
             <Card className="border-none shadow-sm">
@@ -429,27 +323,13 @@ export default function CheckoutPage() {
                     <span className="text-gray-900">₹{cartTotal.toFixed(2)}</span>
                   </div>
                   
-                  {orderType === 'delivery' && (
-                    <div className="flex justify-between text-sm font-medium">
-                      <span className="text-gray-500 flex items-center gap-1">
-                        <Truck className="h-4 w-4 opacity-50" />
-                        Shipping Fee
-                      </span>
-                      <span className={shipping === 0 ? 'text-emerald-600 font-black' : 'text-gray-900'}>
-                        {shipping === 0 ? 'FREE' : `₹${shipping.toFixed(2)}`}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {orderType === 'takeaway' && (
-                    <div className="flex justify-between text-sm font-medium">
-                      <span className="text-gray-500 flex items-center gap-1">
-                        <Store className="h-4 w-4 opacity-50" />
-                        Pickup Discount
-                      </span>
-                      <span className="text-emerald-600 font-black tracking-wider uppercase text-[10px]">Free Pickup</span>
-                    </div>
-                  )}
+                  <div className="flex justify-between text-sm font-medium">
+                    <span className="text-gray-500 flex items-center gap-1">
+                      <Store className="h-4 w-4 opacity-50" />
+                      Pickup
+                    </span>
+                    <span className="text-emerald-600 font-black tracking-wider uppercase text-[10px]">Free</span>
+                  </div>
                 </div>
 
                 <div className="pt-6 border-t-2 border-gray-100">
@@ -461,7 +341,7 @@ export default function CheckoutPage() {
 
                 <Button
                   onClick={handleSubmit}
-                  disabled={loading || (orderType === 'delivery')}
+                  disabled={loading}
                   className="w-full bg-gradient-to-r from-[#743181] to-purple-600 hover:to-[#5a2a6e] text-white py-10 rounded-3xl shadow-xl shadow-purple-900/10 text-xl font-black tracking-tight transform transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
@@ -469,8 +349,6 @@ export default function CheckoutPage() {
                         <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white"></div>
                         Processing...
                     </div>
-                  ) : orderType === 'delivery' ? (
-                    'Call for Delivery'
                   ) : (
                     <>
                       <CheckCircle2 className="h-6 w-6 mr-2" />
