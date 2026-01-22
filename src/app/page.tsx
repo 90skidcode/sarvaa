@@ -1,91 +1,75 @@
 'use client'
 
 import { CartBadge } from '@/components/CartBadge'
+import { MobileMenu } from '@/components/MobileMenu'
+import { SearchBar } from '@/components/SearchBar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Award, Cake, ChevronRight, Clock, Heart, Search, Sparkles, Star, Truck, User } from 'lucide-react'
+import { Award, ChevronRight, Clock, Heart, ShoppingCart, Sparkles, Star, Truck, User } from 'lucide-react'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+
+interface Product {
+  id: string
+  name: string
+  slug: string
+  description: string
+  price: number
+  image: string
+  stock: number
+  featured: boolean
+  categoryId: string
+  rating?: number
+  reviews?: number
+  badge?: string
+}
+
+interface Category {
+  id: string
+  name: string
+  slug: string
+  image: string | null
+  _count?: {
+    products: number
+  }
+}
 
 export default function Home() {
-  const featuredProducts = [
-    {
-      id: 1,
-      name: 'Mysore Pak Premium',
-      description: 'Ghee-rich Mysore Pak with gram flour - melts in mouth',
-      price: 649,
-      originalPrice: 799,
-      image: 'https://images.unsplash.com/photo-1606858265218-4e4b7927c668?w=500&q=80',
-      rating: 4.9,
-      reviews: 856,
-      badge: 'Bestseller'
-    },
-    {
-      id: 2,
-      name: 'Tirunelveli Halwa',
-      description: 'Authentic wheat halwa with pure ghee & dry fruits',
-      price: 799,
-      originalPrice: 949,
-      image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=500&q=80',
-      rating: 4.8,
-      reviews: 689,
-      badge: 'Temple Special'
-    },
-    {
-      id: 3,
-      name: 'Adhirasam',
-      description: 'Traditional jaggery sweet perfect for Pongal',
-      price: 449,
-      originalPrice: null,
-      image: 'https://images.unsplash.com/photo-1571696905784-f0a4e4e9b39a?w=500&q=80',
-      rating: 4.9,
-      reviews: 742,
-      badge: 'Pongal Hit'
-    },
-    {
-      id: 4,
-      name: 'Palgova (Srivilliputhur)',
-      description: 'Soft milk peda from the temple town',
-      price: 599,
-      originalPrice: 699,
-      image: 'https://images.unsplash.com/photo-1606890737304-57a1ca8a5b62?w=500&q=80',
-      rating: 5.0,
-      reviews: 978,
-      badge: 'Premium'
-    },
-    {
-      id: 5,
-      name: 'Kovilpatti Kadalai Mittai',
-      description: 'Famous peanut candy with jaggery coating',
-      price: 349,
-      originalPrice: null,
-      image: 'https://images.unsplash.com/photo-1599599810769-bcde5a160d32?w=500&q=80',
-      rating: 4.7,
-      reviews: 567,
-      badge: 'Chettinad'
-    },
-    {
-      id: 6,
-      name: 'Jangiri (Tamil Style)',
-      slug: 'jangiri-jilebi',
-      description: 'Crispy sweet jangiri soaked in sugar syrup',
-      price: 499,
-      originalPrice: 599,
-      image: 'https://images.unsplash.com/photo-1589994965851-a8f479c573a9?w=500&q=80',
-      rating: 4.6,
-      reviews: 423,
-      badge: 'Fresh Daily'
-    }
-  ]
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const categories = [
-    { name: 'TN Traditional Sweets', image: 'https://images.unsplash.com/photo-1606858265218-4e4b7927c668?w=400&q=80', count: 45 },
-    { name: 'Temple Prasadam', image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400&q=80', count: 32 },
-    { name: 'Chettinad Specials', image: 'https://images.unsplash.com/photo-1571696905784-f0a4e4e9b39a?w=400&q=80', count: 38 },
-    { name: 'Festival Sweets', image: 'https://images.unsplash.com/photo-1599599810769-bcde5a160d32?w=400&q=80', count: 24 },
-    { name: 'Gift Boxes', image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=400&q=80', count: 28 },
-    { name: 'Pongal Special', image: 'https://images.unsplash.com/photo-1606858265279-aa9271e08fd4?w=400&q=80', count: 19 }
-  ]
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [productsRes, categoriesRes] = await Promise.all([
+          fetch('/api/products?featured=true'),
+          fetch('/api/categories?limit=6')
+        ])
+
+        const productsData = await productsRes.json()
+        const categoriesData = await categoriesRes.json()
+
+        // Fallback or random values for rating/reviews as they aren't in schema yet
+        const enrichedProducts = (productsData.products || productsData || []).slice(0, 6).map((p: any) => ({
+          ...p,
+          rating: 4.5 + Math.random() * 0.5,
+          reviews: Math.floor(Math.random() * 1000) + 100,
+          badge: p.featured ? 'Featured' : null
+        }))
+
+        setFeaturedProducts(enrichedProducts)
+        setCategories(categoriesData.categories || categoriesData || [])
+      } catch (error) {
+        console.error('Error fetching home data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -116,8 +100,12 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between py-4">
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-14 h-14 bg-gradient-to-br from-[#743181] to-[#5a2a6e] rounded-full flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                <Cake className="h-7 w-7 text-white" />
+              <div className="relative w-14 h-14 rounded-full overflow-hidden shadow-lg group-hover:scale-105 transition-transform">
+                <img
+                  src="/images/sarvaa-logo-icon.jpg"
+                  alt="Sarvaa Sweets Logo"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-[#743181] tracking-tight">Sarvaa Sweets</h1>
@@ -134,14 +122,6 @@ export default function Home() {
                 Shop Sweets
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#743181] transition-all group-hover:w-full"></span>
               </Link>
-              <Link href="/products?category=traditional-tn" className="text-gray-700 hover:text-[#743181] font-medium transition-colors relative group">
-                TN Traditional
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#743181] transition-all group-hover:w-full"></span>
-              </Link>
-              <Link href="/products?category=temple-prasadam" className="text-gray-700 hover:text-[#743181] font-medium transition-colors relative group">
-                Temple Prasadam
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#743181] transition-all group-hover:w-full"></span>
-              </Link>
               <Link href="/contact" className="text-gray-700 hover:text-[#743181] font-medium transition-colors relative group">
                 Contact
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#743181] transition-all group-hover:w-full"></span>
@@ -149,16 +129,7 @@ export default function Home() {
             </nav>
 
             <div className="flex items-center gap-4">
-              <div className="hidden md:flex items-center gap-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search for sweets..."
-                    className="pl-10 pr-4 py-2 border border-gray-200 rounded-full w-64 focus:outline-none focus:ring-2 focus:ring-[#743181] text-sm"
-                  />
-                </div>
-              </div>
+              <SearchBar />
 
               <Link href="/wishlist">
                 <Button variant="ghost" size="icon" className="relative">
@@ -169,15 +140,11 @@ export default function Home() {
 
               <CartBadge />
 
-              <Link href="/login">
+              <MobileMenu />
+
+              <Link href="/login" className="hidden lg:inline-block">
                 <Button variant="ghost" size="icon">
                   <User className="h-5 w-5 text-gray-600" />
-                </Button>
-              </Link>
-
-              <Link href="/admin">
-                <Button className="bg-gradient-to-r from-[#743181] to-[#5a2a6e] hover:from-[#5a2a6e] hover:to-[#743181]">
-                  Admin
                 </Button>
               </Link>
             </div>
@@ -213,64 +180,34 @@ export default function Home() {
                   <Link href="/products">
                     <Button size="lg" className="bg-gradient-to-r from-[#743181] to-[#5a2a6e] hover:from-[#5a2a6e] hover:to-[#743181] px-8 py-6 text-lg shadow-lg hover:shadow-xl transition-all">
                       Order Now
-                      <ChevronRight className="ml-2 h-5 w-5" />
                     </Button>
                   </Link>
-                  <Link href="/about">
-                    <Button size="lg" variant="outline" className="border-2 border-[#743181] text-[#743181] hover:bg-[#743181] hover:text-white px-8 py-6 text-lg">
-                      Our Story
+                  <Link href="/products">
+                    <Button size="lg" variant="outline" className="border-2 border-[#743181] text-[#743181] hover:bg-purple-50 px-8 py-6 text-lg">
+                      Explore Catalog
                     </Button>
                   </Link>
-                </div>
-
-                {/* Trust Badges */}
-                <div className="flex flex-wrap gap-8 pt-8 border-t">
-                  <div className="flex items-center gap-2">
-                    <Award className="h-6 w-6 text-[#743181]" />
-                    <div>
-                      <p className="font-semibold text-gray-900">50,000+</p>
-                      <p className="text-sm text-gray-500">Happy Customers</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" />
-                    <div>
-                      <p className="font-semibold text-gray-900">4.9/5</p>
-                      <p className="text-sm text-gray-500">Customer Rating</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-6 w-6 text-[#743181]" />
-                    <div>
-                      <p className="font-semibold text-gray-900">Same Day</p>
-                      <p className="text-sm text-gray-500">Delivery</p>
-                    </div>
-                  </div>
                 </div>
               </div>
 
               <div className="relative">
-                <div className="relative z-10">
+                <div className="absolute -inset-4 bg-gradient-to-r from-[#743181] to-[#5a2a6e] rounded-3xl blur-2xl opacity-20 animate-pulse"></div>
+                <div className="relative rounded-3xl overflow-hidden shadow-2xl">
                   <img
-                    src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&q=80"
-                    alt="Premium Cake"
-                    className="w-full h-[600px] object-cover rounded-3xl shadow-2xl"
+                    src="https://images.unsplash.com/photo-1606858265218-4e4b7927c668?w=800&q=80"
+                    alt="Authentic Tamil Nadu Sweets"
+                    className="w-full object-cover transform hover:scale-105 transition-transform duration-700"
                   />
-                </div>
-                <div className="absolute -bottom-6 -left-6 z-20 bg-white rounded-2xl shadow-xl p-6 max-w-xs">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-[#743181] to-[#5a2a6e] rounded-full flex items-center justify-center">
-                      <Sparkles className="h-6 w-6 text-white" />
+                  <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black/80 to-transparent">
+                    <div className="flex items-center gap-4 text-white">
+                      <div className="p-3 bg-white/20 backdrop-blur-md rounded-xl">
+                        <Award className="h-8 w-8 text-yellow-400" />
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold italic">Pure Ghee Classics</p>
+                        <p className="text-sm opacity-80 uppercase tracking-widest">Handcrafted Excellence</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-bold text-gray-900">Premium Quality</p>
-                      <p className="text-sm text-gray-500">100% Pure Ingredients</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                    ))}
                   </div>
                 </div>
               </div>
@@ -279,33 +216,41 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Categories Section */}
-      <section className="py-16 bg-white">
+      {/* Featured Categories */}
+      <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <Badge className="mb-4 bg-purple-100 text-[#743181]">Our Collections</Badge>
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Explore by Category</h2>
+          <div className="text-center mb-16">
+            <Badge className="mb-4 bg-purple-100 text-[#743181]">Special Collections</Badge>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Our Sweet Collections</h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Discover our curated collections of authentic Tamil Nadu sweets for every celebration and occasion
+              Explore the rich variety of Tamil sweets, from crispy treats to ghee-soaked delights
             </p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            {categories.map((category, index) => (
-              <Link
-                key={index}
-                href="/products"
-                className="group relative overflow-hidden rounded-2xl aspect-square shadow-lg hover:shadow-2xl transition-all duration-300"
-              >
-                <img
-                  src={category.image}
-                  alt={category.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h3 className="text-white font-bold text-lg mb-1">{category.name}</h3>
-                  <p className="text-white/80 text-sm">{category.count} items</p>
+            {loading ? (
+              [...Array(6)].map((_, i) => (
+                <div key={i} className="animate-pulse bg-purple-50 rounded-2xl p-4 h-48"></div>
+              ))
+            ) : categories.length === 0 ? (
+              <p className="col-span-full text-center text-gray-500">No categories found</p>
+            ) : categories.map((category) => (
+              <Link key={category.id} href={`/products?category=${category.slug}`} className="group relative block transition-all hover:-translate-y-2">
+                <div className="relative aspect-square rounded-2xl overflow-hidden shadow-lg shadow-purple-200">
+                  <img
+                    src={category.image || 'https://images.unsplash.com/photo-1606858265218-4e4b7927c668?w=400&q=80'}
+                    alt={category.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <p className="text-white font-bold text-lg leading-tight group-hover:text-purple-200 transition-colors">
+                      {category.name}
+                    </p>
+                    <p className="text-purple-200 text-xs mt-1">
+                      {category._count?.products || 0} Specialities
+                    </p>
+                  </div>
                 </div>
               </Link>
             ))}
@@ -314,72 +259,71 @@ export default function Home() {
       </section>
 
       {/* Featured Products */}
-      <section className="py-20 bg-gradient-to-br from-purple-50 to-pink-50">
+      <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-4">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-16">
             <div>
-              <Badge className="mb-4 bg-[#743181] text-white">Bestsellers</Badge>
-              <h2 className="text-4xl font-bold text-gray-900 mb-2">Our Signature Tamil Sweets</h2>
-              <p className="text-lg text-gray-600">Handpicked favorites loved by thousands across Tamil Nadu</p>
+              <Badge className="mb-4 bg-pink-100 text-pink-700">Daily Specials</Badge>
+              <h2 className="text-4xl font-bold text-gray-900">Featured Delights</h2>
             </div>
-            <Link href="/products">
-              <Button size="lg" variant="outline" className="border-2 border-[#743181] text-[#743181] hover:bg-[#743181] hover:text-white">
-                View All Products
-                <ChevronRight className="ml-2 h-5 w-5" />
-              </Button>
+            <Link href="/products" className="group flex items-center text-[#743181] font-bold hover:text-[#5a2a6e] transition-colors mt-4 md:mt-0">
+              View All Products
+              <ChevronRight className="ml-1 h-5 w-5 transform group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredProducts.map((product) => (
-              <Card key={product.id} className="group overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300">
-                <div className="relative aspect-square overflow-hidden">
-                  {product.badge && (
-                    <Badge className="absolute top-4 left-4 z-10 bg-gradient-to-r from-[#743181] to-[#5a2a6e] text-white">
-                      {product.badge}
-                    </Badge>
-                  )}
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                    <Button className="opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 bg-white text-[#743181] hover:bg-[#743181] hover:text-white">
-                      Quick View
-                    </Button>
+            {loading ? (
+              [...Array(3)].map((_, i) => (
+                <div key={i} className="animate-pulse bg-purple-50 rounded-2xl h-[450px]"></div>
+              ))
+            ) : featuredProducts.length === 0 ? (
+              <p className="col-span-full text-center text-gray-500">No featured products found</p>
+            ) : featuredProducts.map((product) => (
+              <Card key={product.id} className="group overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl">
+                <CardContent className="p-0">
+                  <div className="relative aspect-[4/3] overflow-hidden">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    {product.badge && (
+                      <div className="absolute top-4 left-4">
+                        <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 border-none shadow-lg">
+                          {product.badge}
+                        </Badge>
+                      </div>
+                    )}
+                    <button className="absolute top-4 right-4 p-2 rounded-full bg-white/80 backdrop-blur-sm text-[#743181] hover:bg-white transition-colors opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 duration-300 shadow-md">
+                      <Heart className="h-5 w-5" />
+                    </button>
                   </div>
-                  <Link href="/wishlist" className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button size="icon" variant="secondary" className="bg-white hover:bg-white/90">
-                      <Heart className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                </div>
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-[#743181] transition-colors">
-                    {product.name}
-                  </h3>
-                  <p className="text-gray-600 mb-3 line-clamp-2">{product.description}</p>
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="flex items-center">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} className={`h-4 w-4 ${i < Math.floor(product.rating) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} />
-                      ))}
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-xl font-bold text-gray-900 group-hover:text-[#743181] transition-colors">{product.name}</h3>
                     </div>
-                    <span className="text-sm font-medium text-gray-600">{product.rating}</span>
-                    <span className="text-sm text-gray-400">({product.reviews})</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold text-[#743181]">₹{product.price}</span>
-                      {product.originalPrice && (
-                        <span className="text-lg text-gray-400 line-through">₹{product.originalPrice}</span>
-                      )}
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                      {product.description}
+                    </p>
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="flex items-center">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className={`h-4 w-4 ${i < Math.floor(product.rating || 5) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} />
+                        ))}
+                      </div>
+                      <span className="text-sm font-medium text-gray-600">{product.rating ? product.rating.toFixed(1) : '5.0'}</span>
+                      <span className="text-sm text-gray-400">({product.reviews || 0})</span>
                     </div>
-                    <Button size="sm" className="bg-gradient-to-r from-[#743181] to-[#5a2a6e] hover:from-[#5a2a6e] hover:to-[#743181]">
-                      <ShoppingCart className="h-4 w-4 mr-2" />
-                      Add
-                    </Button>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl font-bold text-[#743181]">₹{product.price}</span>
+                      </div>
+                      <Button size="sm" className="bg-gradient-to-r from-[#743181] to-[#5a2a6e] hover:from-[#5a2a6e] hover:to-[#743181]">
+                        <ShoppingCart className="h-4 w-4 mr-2" />
+                        Add
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -468,99 +412,63 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16 mt-auto">
+      <footer className="bg-gray-900 text-gray-300 py-16">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
             <div>
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-[#743181] to-[#5a2a6e] rounded-full flex items-center justify-center">
-                  <Cake className="h-6 w-6 text-white" />
+                <div className="p-2 bg-white rounded-lg">
+                  <img src="/images/sarvaa-logo-icon.jpg" alt="Sarvaa Logo" className="w-8 h-8" />
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold">Sarvaa Sweets</h3>
-                  <p className="text-xs text-gray-400 tracking-widest uppercase">Premium Confectionery</p>
-                </div>
+                <span className="text-white text-xl font-bold tracking-tight">Sarvaa Sweets</span>
               </div>
-              <p className="text-gray-400 mb-6">
-                Tamil Nadu's premier destination for premium traditional sweets and handcrafted Tamil mithai. Creating memories one sweet at a time.
+              <p className="mb-6 leading-relaxed">
+                Authentic Tamil Nadu sweets made with pure ghee and centuries-old recipes. Preserving tradition, one sweet at a time.
               </p>
-              <div className="flex gap-3">
-                {['Facebook', 'Instagram', 'Twitter', 'YouTube'].map((social) => (
-                  <div key={social} className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-[#743181] transition-colors cursor-pointer">
-                    <span className="text-xs font-semibold">{social[0]}</span>
-                  </div>
+              <div className="flex gap-4">
+                {['facebook', 'instagram', 'twitter', 'youtube'].map((social) => (
+                  <Link key={social} href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-[#743181] transition-colors">
+                    <span className="sr-only">{social}</span>
+                    <div className="w-5 h-5 bg-current opacity-70"></div>
+                  </Link>
                 ))}
               </div>
             </div>
 
             <div>
-              <h3 className="font-bold text-lg mb-6">Quick Links</h3>
-              <ul className="space-y-3">
-                {['Home', 'Shop Sweets', 'TN Traditional', 'Temple Prasadam', 'About Us', 'Contact'].map((link) => (
-                  <li key={link}>
-                    <Link href={link === 'Home' ? '/' : `/${link.toLowerCase().replace(' ', '-')}`} className="text-gray-400 hover:text-white transition-colors flex items-center gap-2">
-                      <ChevronRight className="h-4 w-4" />
-                      {link}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-lg mb-6">Customer Service</h3>
-              <ul className="space-y-3">
-                {['My Orders', 'Track Order', 'Wishlist', 'Returns Policy', 'FAQ', 'Size Guide'].map((link) => (
-                  <li key={link}>
-                    <Link href="#" className="text-gray-400 hover:text-white transition-colors flex items-center gap-2">
-                      <ChevronRight className="h-4 w-4" />
-                      {link}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-lg mb-6">Contact Info</h3>
+              <h4 className="text-white font-bold text-lg mb-6">Quick Links</h4>
               <ul className="space-y-4">
-                <li className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-[#743181] rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-sm">📍</span>
-                  </div>
-                  <div>
-                    <p className="text-gray-400">123, T. Nagar Main Road, Chennai 600017</p>
-                    <p className="text-gray-400">Tamil Nadu, India</p>
-                  </div>
-                </li>
-                <li className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-[#743181] rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm">📞</span>
-                  </div>
-                  <p className="text-gray-400">1800-123-4567</p>
-                </li>
-                <li className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-[#743181] rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm">✉️</span>
-                  </div>
-                  <p className="text-gray-400">hello@sarvaasweets.com</p>
-                </li>
+                <li><Link href="/products" className="hover:text-white transition-colors">Our Products</Link></li>
+                <li><Link href="/wishlist" className="hover:text-white transition-colors">Wishlist</Link></li>
+                <li><Link href="/cart" className="hover:text-white transition-colors">My Cart</Link></li>
+                <li><Link href="/contact" className="hover:text-white transition-colors">Contact Us</Link></li>
               </ul>
+            </div>
+
+            <div>
+              <h4 className="text-white font-bold text-lg mb-6">Collections</h4>
+              <ul className="space-y-4">
+                 {categories.slice(0, 4).map(cat => (
+                   <li key={cat.id}><Link href={`/products?category=${cat.slug}`} className="hover:text-white transition-colors">{cat.name}</Link></li>
+                 ))}
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-white font-bold text-lg mb-6">Newsletter</h4>
+              <p className="mb-4">Get sweet updates and festive offers!</p>
+              <form className="flex gap-2">
+                <input
+                  type="email"
+                  placeholder="Your Email"
+                  className="bg-white/10 rounded-lg px-4 py-2 flex-1 focus:ring-2 focus:ring-[#743181] outline-none"
+                />
+                <Button className="bg-[#743181] hover:bg-[#5a2a6e]">Join</Button>
+              </form>
             </div>
           </div>
-
-          <div className="border-t border-gray-800 pt-8">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <p className="text-gray-400 text-center md:text-left">
-                © 2024 Sarvaa Sweets. All rights reserved. Crafted with ❤️ in India
-              </p>
-              <div className="flex items-center gap-4">
-                <img src="https://img.icons8.com/color/48/google-pay-india.png" alt="GPay" className="h-8" />
-                <img src="https://img.icons8.com/color/48/paytm.png" alt="Paytm" className="h-8" />
-                <img src="https://img.icons8.com/color/48/phonepe.png" alt="PhonePe" className="h-8" />
-                <div className="text-white bg-gradient-to-r from-green-600 to-green-700 px-3 py-1 rounded text-sm font-bold">UPI</div>
-              </div>
-            </div>
+          <div className="border-t border-white/10 mt-16 pt-8 text-center text-sm">
+            <p>&copy; {new Date().getFullYear()} Sarvaa Sweets. Dedicated to Tamil Traditions.</p>
           </div>
         </div>
       </footer>

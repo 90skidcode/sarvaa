@@ -1,85 +1,107 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { db } from "@/lib/db";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> | { id: string } },
 ) {
   try {
+    // Handle both async and sync params for Next.js 15
+    const params = await Promise.resolve(context.params);
+    const productId = params.id;
+
+    console.log("Fetching product with ID:", productId);
+
     const product = await db.product.findUnique({
-      where: { id: params.id },
+      where: { id: productId },
       include: {
-        category: true
-      }
-    })
+        category: true,
+      },
+    });
+
+    console.log("Product found:", product ? "Yes" : "No");
 
     if (!product) {
-      return NextResponse.json(
-        { error: 'Product not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ product })
+    return NextResponse.json({ product });
   } catch (error) {
-    console.error('Error fetching product:', error)
+    console.error("Error fetching product:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch product' },
-      { status: 500 }
-    )
+      { error: "Failed to fetch product" },
+      { status: 500 },
+    );
   }
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> | { id: string } },
 ) {
   try {
-    const body = await request.json()
-    const { name, slug, description, price, image, stock, featured, categoryId } = body
+    const params = await Promise.resolve(context.params);
+    const productId = params.id;
+
+    const body = await request.json();
+    const {
+      name,
+      slug,
+      description,
+      price,
+      image,
+      stock,
+      featured,
+      isActive,
+      categoryId,
+    } = body;
 
     const product = await db.product.update({
-      where: { id: params.id },
+      where: { id: productId },
       data: {
         ...(name && { name }),
         ...(slug && { slug }),
         ...(description !== undefined && { description }),
-        ...(price !== undefined && { price: parseFloat(price) }),
+        ...(price !== undefined && { price: Number.parseFloat(price) }),
         ...(image !== undefined && { image }),
-        ...(stock !== undefined && { stock: parseInt(stock) }),
+        ...(stock !== undefined && { stock: Number.parseInt(stock) }),
         ...(featured !== undefined && { featured }),
-        ...(categoryId && { categoryId })
+        ...(isActive !== undefined && { isActive }),
+        ...(categoryId && { categoryId }),
       },
       include: {
-        category: true
-      }
-    })
+        category: true,
+      },
+    });
 
-    return NextResponse.json({ product })
+    return NextResponse.json({ product });
   } catch (error) {
-    console.error('Error updating product:', error)
+    console.error("Error updating product:", error);
     return NextResponse.json(
-      { error: 'Failed to update product' },
-      { status: 500 }
-    )
+      { error: "Failed to update product" },
+      { status: 500 },
+    );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> | { id: string } },
 ) {
   try {
-    await db.product.delete({
-      where: { id: params.id }
-    })
+    const params = await Promise.resolve(context.params);
+    const productId = params.id;
 
-    return NextResponse.json({ message: 'Product deleted successfully' })
+    await db.product.delete({
+      where: { id: productId },
+    });
+
+    return NextResponse.json({ message: "Product deleted successfully" });
   } catch (error) {
-    console.error('Error deleting product:', error)
+    console.error("Error deleting product:", error);
     return NextResponse.json(
-      { error: 'Failed to delete product' },
-      { status: 500 }
-    )
+      { error: "Failed to delete product" },
+      { status: 500 },
+    );
   }
 }

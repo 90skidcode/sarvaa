@@ -1,86 +1,118 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { prisma } from "@/lib/db";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const category = searchParams.get('category')
-    const featured = searchParams.get('featured')
-    const search = searchParams.get('search')
+    const { searchParams } = new URL(request.url);
+    const categoryQuery = searchParams.get("category");
+    const featured = searchParams.get("featured");
+    const search = searchParams.get("search");
+    const activeOnly = searchParams.get("activeOnly");
+    const page = Number.parseInt(searchParams.get("page") || "1");
+    const limit = Number.parseInt(searchParams.get("limit") || "10");
+    const skip = (page - 1) * limit;
 
-    const where: any = {}
+    const where: any = {};
 
-    if (category) {
+    if (categoryQuery) {
       where.category = {
-        slug: category
-      }
+        slug: categoryQuery,
+      };
     }
 
-    if (featured === 'true') {
-      where.featured = true
+    if (featured === "true") {
+      where.featured = true;
     }
 
     if (search) {
       where.OR = [
         { name: { contains: search } },
-        { description: { contains: search } }
-      ]
+        { description: { contains: search } },
+      ];
     }
 
-    const products = await db.product.findMany({
-      where,
-      include: {
-        category: true
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
+    if (activeOnly === "true") {
+      where.isActive = true;
+    }
 
-    return NextResponse.json({ products })
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          category: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      }),
+      prisma.product.count({ where }),
+    ]);
+
+    return NextResponse.json({
+      products,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
-    console.error('Error fetching products:', error)
+    console.error("Error fetching products:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch products' },
-      { status: 500 }
-    )
+      { error: "Failed to fetch products" },
+      { status: 500 },
+    );
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { name, slug, description, price, image, stock, featured, categoryId } = body
+    const body = await request.json();
+    const {
+      name,
+      slug,
+      description,
+      price,
+      image,
+      stock,
+      featured,
+      isActive,
+      categoryId,
+    } = body;
 
     if (!name || !slug || !description || !price || !image || !categoryId) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
+        { error: "Missing required fields" },
+        { status: 400 },
+      );
     }
 
-    const product = await db.product.create({
+    const product = await prisma.product.create({
       data: {
         name,
         slug,
         description,
-        price: parseFloat(price),
+        price: Number.parseFloat(price),
         image,
-        stock: parseInt(stock) || 0,
+        stock: Number.parseInt(stock) || 0,
         featured: featured || false,
-        categoryId
+        isActive: isActive !== undefined ? isActive : true,
+        categoryId,
       },
       include: {
-        category: true
-      }
-    })
+        category: true,
+      },
+    });
 
-    return NextResponse.json({ product }, { status: 201 })
+    return NextResponse.json({ product }, { status: 201 });
   } catch (error) {
-    console.error('Error creating product:', error)
+    console.error("Error creating product:", error);
     return NextResponse.json(
-      { error: 'Failed to create product' },
-      { status: 500 }
-    )
+      { error: "Failed to create product" },
+      { status: 500 },
+    );
   }
 }

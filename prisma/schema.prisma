@@ -34,6 +34,7 @@ model Category {
   slug        String    @unique
   description String?
   image       String?
+  isActive    Boolean   @default(true)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -49,6 +50,7 @@ model Product {
   image       String
   stock       Int      @default(0)
   featured    Boolean  @default(false)
+  isActive    Boolean  @default(true)
   categoryId  String
   weights     String?  // JSON: [{weight:"250g",price:349},{weight:"500g",price:649},{weight:"1kg",price:1199}]
   createdAt   DateTime @default(now())
@@ -104,6 +106,17 @@ model CartItem {
   product   Product  @relation(fields: [productId], references: [id])
 
   @@unique([userId, productId, weight])
+}
+
+model Store {
+  id          String   @id @default(cuid())
+  name        String
+  address     String
+  phone       String?
+  email       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Settings {

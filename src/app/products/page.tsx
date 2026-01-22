@@ -3,8 +3,9 @@
 import { ProductCard } from '@/components/ProductCard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Filter } from 'lucide-react'
+import { ArrowLeft, Filter, Search } from 'lucide-react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 interface Product {
@@ -34,13 +35,32 @@ const FILTER_CATEGORIES = [
 ]
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>([])
+  const searchParams = useSearchParams()
+  const searchQuery = searchParams.get('search')
+  
+  const [allProducts, setAllProducts] = useState<Product[]>([])
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [activeFilter, setActiveFilter] = useState('all')
 
   useEffect(() => {
     fetchProducts()
   }, [activeFilter])
+
+  useEffect(() => {
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      const filtered = allProducts.filter(product => 
+        product.name.toLowerCase().includes(query) ||
+        product.description.toLowerCase().includes(query) ||
+        product.category.name.toLowerCase().includes(query)
+      )
+      setFilteredProducts(filtered)
+    } else {
+      setFilteredProducts(allProducts)
+    }
+  }, [searchQuery, allProducts])
 
   const fetchProducts = async () => {
     try {
@@ -51,13 +71,15 @@ export default function ProductsPage() {
       
       const response = await fetch(url)
       const data = await response.json()
-      setProducts(data)
+      setAllProducts(data)
     } catch (error) {
       console.error('Error fetching products:', error)
     } finally {
       setLoading(false)
     }
   }
+
+  const products = filteredProducts
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -74,29 +96,84 @@ export default function ProductsPage() {
           </p>
         </div>
 
-        {/* Category Filters */}
+        {/* Search and Filters Combined */}
         <div className="mb-8 bg-white rounded-lg p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
-            <Filter className="h-5 w-5 text-gray-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Filter by Category</h2>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {FILTER_CATEGORIES.map((category) => (
-              <Button
-                key={category.value}
-                variant={activeFilter === category.value ? 'default' : 'outline'}
-                onClick={() => setActiveFilter(category.value)}
-                className={
-                  activeFilter === category.value
-                    ? 'bg-gradient-to-r from-[#743181] to-[#5a2a6e] text-white'
-                    : 'border-gray-300 text-gray-700 hover:border-[#743181] hover:text-[#743181]'
-                }
-              >
-                {category.label}
-              </Button>
-            ))}
+          <div className="grid lg:grid-cols-2 gap-8">
+            {/* Search Box - Left Side */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Search className="h-5 w-5 text-[#743181]" />
+                <h2 className="text-lg font-semibold text-gray-900">Search Products</h2>
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchQuery || ''}
+                  onChange={(e) => {
+                    const query = e.target.value
+                    if (query) {
+                      window.history.pushState({}, '', `/products?search=${encodeURIComponent(query)}`)
+                    } else {
+                      window.history.pushState({}, '', '/products')
+                    }
+                    window.dispatchEvent(new PopStateEvent('popstate'))
+                  }}
+                  placeholder="Search by name, description..."
+                  className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#743181] focus:border-transparent text-base"
+                />
+              </div>
+            </div>
+
+            {/* Category Filters - Right Side */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Filter className="h-5 w-5 text-[#743181]" />
+                <h2 className="text-lg font-semibold text-gray-900">Filter by Category</h2>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {FILTER_CATEGORIES.map((category) => (
+                  <Button
+                    key={category.value}
+                    variant={activeFilter === category.value ? 'default' : 'outline'}
+                    onClick={() => setActiveFilter(category.value)}
+                    size="sm"
+                    className={
+                      activeFilter === category.value
+                        ? 'bg-gradient-to-r from-[#743181] to-[#5a2a6e] text-white'
+                        : 'border-gray-300 text-gray-700 hover:border-[#743181] hover:text-[#743181]'
+                    }
+                  >
+                    {category.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Search Results Banner */}
+        {searchQuery && (
+          <div className="mb-6 bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Search className="h-5 w-5 text-[#743181]" />
+                <p className="text-gray-900">
+                  Search results for: <span className="font-semibold text-[#743181]">"{searchQuery}"</span>
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  window.history.pushState({}, '', '/products')
+                  window.dispatchEvent(new PopStateEvent('popstate'))
+                }}
+                className="text-sm text-gray-600 hover:text-[#743181] underline"
+              >
+                Clear search
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Products Grid */}
         {loading ? (
