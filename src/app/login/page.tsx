@@ -134,9 +134,17 @@ export default function LoginPage() {
       const idToken = await user.getIdToken()
       
       // Store user info and token in localStorage
+      // Extract phone number without country code
+      const phoneWithoutCode = user.phoneNumber?.replace('+91', '') || ''
+      
       localStorage.setItem('user', JSON.stringify({
+        id: user.uid,
         uid: user.uid,
         phoneNumber: user.phoneNumber,
+        phone: phoneWithoutCode,
+        name: '',
+        email: '',
+        address: '',
         idToken: idToken,
       }))
       

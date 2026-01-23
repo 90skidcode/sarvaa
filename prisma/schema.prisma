@@ -9,20 +9,24 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+  // Uncomment the line below if using Supabase
+  // directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  password  String
-  role      String   @default("customer") // "customer" or "admin"
-  phone     String?
-  address   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String?
+  password    String
+  role        String   @default("customer") // "customer" or "admin"
+  phone       String?
+  phoneNumber String?  @unique // Full phone number with country code (e.g., +919843883829)
+  firebaseUid String?  @unique // Firebase user ID for phone auth users
+  address     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   orders    Order[]
   cartItems CartItem[]
@@ -147,4 +151,16 @@ model Banner {
   displayOrder  Int      @default(0) // Order in which banners appear
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model UserProfile {
+  id          String   @id @default(cuid())
+  firebaseUid String   @unique // Firebase user ID
+  phoneNumber String   @unique // Phone number with country code
+  phone       String?  // Phone number without country code
+  name        String?
+  email       String?
+  address     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

@@ -100,8 +100,18 @@ export default function CheckoutPage() {
       // Simulate order creation
       await new Promise(resolve => setTimeout(resolve, 2000))
 
+      // Generate order number in format: YYYYMMDDXXXX
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      const day = String(now.getDate()).padStart(2, '0')
+      const sequence = String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0')
+      const orderNumber = `${year}${month}${day}${sequence}`
+
       // Create order object
       const order = {
+        id: orderNumber,
+        orderNumber: orderNumber,
         items: items.map(item => ({
           productId: item.productId,
           name: item.name,
@@ -119,18 +129,47 @@ export default function CheckoutPage() {
         createdAt: new Date().toISOString()
       }
 
-      // Store order in localStorage for now (in production, POST to API)
-      const orders = JSON.parse(localStorage.getItem('orders') || '[]')
-      orders.push(order)
-      localStorage.setItem('orders', JSON.stringify(orders))
+      // Save order to database via API
+      try {
+        const response = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone: formData.phone,
+            email: formData.email,
+            name: formData.name,
+            notes: `Store: ${formData.selectedStore}`,
+            items: order.items.map(item => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              price: item.price,
+              weight: item.variantValue
+            }))
+          })
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          // Update order with database ID
+          order.id = data.order?.id || order.id
+          order.orderNumber = data.order?.orderNumber || order.orderNumber
+        }
+      } catch (apiError) {
+        console.error('API order save failed, using local storage:', apiError)
+      }
+
+      // Also store order in localStorage for user's order history
+      const localOrders = JSON.parse(localStorage.getItem('orders') || '[]')
+      localOrders.push(order)
+      localStorage.setItem('orders', JSON.stringify(localOrders))
 
       // Clear cart
       clearCart()
 
       // Show success
       const storeName = stores.find(s => s.id === formData.selectedStore)?.name
-      toast.success(`Order confirmed! Pick up from ${storeName}`, {
-        description: `Order total: ₹${grandTotal}. We'll contact you shortly.`
+      toast.success(`Order ${order.orderNumber} confirmed!`, {
+        description: `Pick up from ${storeName}. Total: ₹${grandTotal}`
       })
 
       // Redirect to success page
