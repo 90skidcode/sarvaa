@@ -3,7 +3,7 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { isAuthenticated } from '@/lib/api-client'
+import { getCurrentUser } from '@/lib/api-client'
 import { ArrowLeft, ChevronRight, ClipboardList, Package, Store } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -11,25 +11,20 @@ import { useEffect, useState } from 'react'
 
 interface OrderItem {
   productId: string
-  name: string
   quantity: number
-  variantType: string
-  variantValue: string
   price: number
+  weight: string | null
+  product: {
+    id: string
+    name: string
+    image: string
+  }
 }
 
 interface Order {
   id: string
   orderNumber: string
   items: OrderItem[]
-  customer: {
-    name: string
-    email: string
-    phone: string
-    selectedStore: string
-  }
-  orderType: string
-  storeId: string
   total: number
   paymentMethod: string
   status: string
@@ -51,19 +46,27 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
 
   useEffect(() => {
-    if (!isAuthenticated()) {
+    const user = getCurrentUser()
+    if (!user) {
       router.push('/login')
       return
     }
 
-    // Fetch orders from localStorage (in production, fetch from API)
-    const storedOrders = JSON.parse(localStorage.getItem('orders') || '[]')
-    // Sort by date, newest first
-    const sortedOrders = storedOrders.sort((a: Order, b: Order) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
-    setOrders(sortedOrders)
-    setLoading(false)
+    const fetchUserOrders = async () => {
+      try {
+        const response = await fetch(`/api/orders?userId=${user.id}&email=${user.email}`)
+        const data = await response.json()
+        if (response.ok) {
+          setOrders(data.orders || [])
+        }
+      } catch (error) {
+        console.error('Error fetching orders:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUserOrders()
   }, [router])
 
   const formatDate = (dateString: string) => {
@@ -138,16 +141,26 @@ export default function OrdersPage() {
                   </CardHeader>
                   <CardContent className="p-6">
                     {/* Items */}
-                    <div className="space-y-3 mb-4">
+                    <div className="space-y-4 mb-4">
                       {order.items.map((item, itemIndex) => (
                         <div key={`item-${index}-${itemIndex}`} className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm font-medium text-gray-900">{item.name}</span>
-                            <span className="text-xs text-gray-500">
-                              {item.variantValue} {item.variantType !== 'Default' ? item.variantType : ''} × {item.quantity}
-                            </span>
+                          <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 relative rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                              <img
+                                src={item.product?.image}
+                                alt={item.product?.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-gray-900 leading-tight mb-1">{item.product?.name}</p>
+                              <p className="text-xs text-gray-500">
+                                {item.weight && <span>{item.weight} • </span>}
+                                Qty: {item.quantity} × ₹{item.price.toFixed(2)}
+                              </p>
+                            </div>
                           </div>
-                          <span className="font-semibold text-[#743181]">₹{(item.price * item.quantity).toFixed(2)}</span>
+                          <span className="font-bold text-[#743181]">₹{(item.price * item.quantity).toFixed(2)}</span>
                         </div>
                       ))}
                     </div>

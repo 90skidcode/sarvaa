@@ -5,17 +5,19 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { WeightOption, WeightSelector } from '@/components/WeightSelector'
 import { useCartStore } from '@/lib/store'
-import { ShoppingCart } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
 interface ProductCardProps {
   id: string
+  slug: string
   name: string
   description: string
   price: number
   image: string
+  images?: string[]
   stock: number
   weights?: string | null
   badge?: string
@@ -25,10 +27,12 @@ interface ProductCardProps {
 
 export function ProductCard({
   id,
+  slug,
   name,
   description,
   price,
   image,
+  images = [],
   stock,
   weights,
   badge,
@@ -37,7 +41,18 @@ export function ProductCard({
 }: ProductCardProps) {
   const [quantity, setQuantity] = useState(1)
   const [selectedWeight, setSelectedWeight] = useState<string>('')
+  const [isHovered, setIsHovered] = useState(false)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const addItem = useCartStore((state) => state.addItem)
+
+  // Combine primary image with additional images
+  const allImages = useMemo(() => {
+    const combined = [image]
+    if (images && images.length > 0) {
+      combined.push(...images)
+    }
+    return combined
+  }, [image, images])
 
   // Parse weights from JSON string
   const weightOptions: WeightOption[] = useMemo(() => {
@@ -96,91 +111,127 @@ export function ProductCard({
       description: `₹${(variantData.price * quantity).toFixed(2)}`
     })
     
-    setQuantity(1)
+   setQuantity(1)
   }
 
+  // Auto-rotate images on hover
+  useEffect(() => {
+    if (!isHovered || allImages.length <= 1) {
+      setCurrentImageIndex(0)
+      return
+    }
+
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % allImages.length)
+    }, 800) // Rotate every 800ms
+
+    return () => clearInterval(interval)
+  }, [isHovered, allImages.length])
+
   return (
-    <Card className="group overflow-hidden rounded-[2rem] border-none bg-white shadow-lg hover:shadow-2xl transition-all duration-500 flex flex-col h-full py-0">
+    <Card className="group overflow-hidden rounded-3xl border-none bg-white shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full p-0 gap-0">
       <CardContent className="p-0 flex flex-col h-full">
         {/* Image Section */}
-        <div className="relative aspect-[4/3] overflow-hidden">
+        <Link 
+          href={`/products/${slug}`} 
+          className="relative aspect-square overflow-hidden rounded-t-3xl block"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
           <Image
-            src={image}
+            src={allImages[currentImageIndex]}
             alt={name}
             fill
-            className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+            className="object-cover transition-all duration-300 ease-out group-hover:scale-105"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
-          <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-500" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           
           {badge && (
-            <div className="absolute top-4 left-4 z-10">
-              <span className="bg-[#743181] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
+            <div className="absolute top-3 right-3 z-10">
+              <span className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
                 {badge}
               </span>
             </div>
           )}
-        </div>
+
+          {/* Image Dots Indicator */}
+          {allImages.length > 1 && (
+            <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-10">
+              {allImages.map((_, index) => (
+                <div
+                  key={index}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    index === currentImageIndex 
+                      ? 'w-6 bg-white' 
+                      : 'w-1.5 bg-white/50'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+        </Link>
 
         {/* Content Section */}
-        <div className="px-6 pb-6 pt-2 flex flex-col flex-grow space-y-4">
-          {/* Header: Name & Description */}
-          <div className="space-y-1">
-            <h3 className="text-xl font-extrabold text-[#1a1a1a] tracking-tight group-hover:text-[#743181] transition-colors line-clamp-1">
+        <div className="p-5 flex flex-col flex-grow space-y-3">
+          {/* Product Name */}
+          <Link href={`/products/${slug}`}>
+            <h3 className="text-lg font-bold text-gray-900 line-clamp-1 hover:text-purple-600 transition cursor-pointer">
               {name}
             </h3>
-            <p className="text-sm font-medium text-gray-500 line-clamp-2 leading-relaxed h-10">
-              {description}
-            </p>
-          </div>
+          </Link>
+          
+          {/* Description */}
+          <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed">
+            {description}
+          </p>
 
-          <div className="pt-2 space-y-4 mt-auto">
-            {/* Action Bar: Weight & Price */}
-            <div className="space-y-4">
+          <div className="mt-auto space-y-3">
+            {/* Price and Weight Selector Row */}
+            <div className="flex items-center justify-between gap-3">
+              {/* Price */}
+              <div className="flex items-baseline">
+                <span className="text-2xl font-bold text-gray-900">
+                  ₹{variantData.price}
+                </span>
+              </div>
+              
+              {/* Weight Selector */}
               {weightOptions.length > 0 && (
                 <WeightSelector
                   weights={weightOptions}
                   selectedWeight={selectedWeight}
                   onWeightChange={setSelectedWeight}
-                  className="w-full"
+                  className="flex-shrink-0"
                 />
               )}
-
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-black text-[#743181]">
-                      ₹{variantData.price}
-                    </span>
-                    {weightOptions.length === 0 && (
-                      <span className="text-xs font-bold text-gray-400 uppercase tracking-tighter">/ pack</span>
-                    )}
-                  </div>
-                </div>
-                
-                <QuantityControl
-                  quantity={quantity}
-                  onQuantityChange={setQuantity}
-                  max={Math.min(stock, 99)}
-                />
-              </div>
             </div>
 
-            {/* CTA Button */}
-            <Button
-              onClick={handleAddToCart}
-              disabled={stock === 0}
-              className="w-full h-14 rounded-2xl bg-[#743181] hover:bg-[#5a2a6e] text-white font-bold text-base shadow-lg shadow-purple-100 transition-all hover:-translate-y-1 active:scale-[0.98] group/btn"
-            >
-              <ShoppingCart className="h-5 w-5 mr-2 transition-transform group-hover/btn:-rotate-12" />
-              {stock === 0 ? 'Fresh out!' : 'Add to Cart'}
-            </Button>
+            {/* Quantity Control and Add to Cart Row */}
+            <div className="flex items-center gap-3">
+              {/* Quantity Control */}
+              <QuantityControl
+                quantity={quantity}
+                onQuantityChange={setQuantity}
+                max={Math.min(stock, 99)}
+              />
+              
+              {/* Add to Cart Button */}
+              <Button
+                onClick={handleAddToCart}
+                disabled={stock === 0}
+                className="flex-1 h-12 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold shadow-md transition-all hover:shadow-lg active:scale-95"
+              >
+                Add to Cart
+              </Button>
+            </div>
 
+            {/* Low Stock Warning */}
             {stock > 0 && stock <= 5 && (
-              <div className="flex items-center justify-center gap-1.5 animate-pulse">
-                <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest">
-                  Rare Find: Only {stock} left
+              <div className="flex items-center justify-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                <p className="text-xs font-medium text-orange-600">
+                  Only {stock} left in stock
                 </p>
               </div>
             )}

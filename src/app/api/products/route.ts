@@ -82,6 +82,7 @@ export async function POST(request: NextRequest) {
       isActive,
       categoryId,
       weights,
+      images,
     } = body;
 
     if (!name || !slug || !description || !price || !image || !categoryId) {
@@ -108,6 +109,7 @@ export async function POST(request: NextRequest) {
             : JSON.stringify(weights);
         })(),
         categoryId,
+        images,
       },
       include: {
         category: true,

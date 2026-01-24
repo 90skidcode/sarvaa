@@ -51,7 +51,8 @@ model Product {
   slug        String   @unique
   description String
   price       Float    // Base price for default weight
-  image       String
+  image       String   // Primary image (for backward compatibility)
+  images      String?  // JSON array of additional images: ["url1", "url2", "url3"]
   stock       Int      @default(0)
   featured    Boolean  @default(false)
   isActive    Boolean  @default(true)
@@ -70,7 +71,7 @@ model Order {
   orderNumber String      @unique
   status      String      @default("pending") // pending, confirmed, preparing, ready, delivered, cancelled
   total       Float
-  userId      String
+  userId      String?
   phone       String
   email       String?
   name        String?
@@ -79,7 +80,7 @@ model Order {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
-  user        User        @relation(fields: [userId], references: [id])
+  user        User?       @relation(fields: [userId], references: [id])
   items       OrderItem[]
 }
 

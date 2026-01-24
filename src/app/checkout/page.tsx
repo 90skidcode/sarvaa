@@ -48,7 +48,9 @@ export default function CheckoutPage() {
     if (currentUser) {
       setFormData(prev => ({
         ...prev,
-        phone: currentUser.phoneNumber?.replace('+91', '') || ''
+        name: prev.name || currentUser.name || '',
+        email: prev.email || currentUser.email || '',
+        phone: prev.phone || currentUser.phoneNumber?.replace('+91', '') || currentUser.phone?.replace('+91', '') || ''
       }))
     }
 
@@ -131,19 +133,23 @@ export default function CheckoutPage() {
 
       // Save order to database via API
       try {
+        const currentUser = getCurrentUser()
+        const selectedStoreData = stores.find(s => s.id === formData.selectedStore)
+        
         const response = await fetch('/api/orders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            userId: currentUser?.id || null, // null for guest
             phone: formData.phone,
             email: formData.email,
             name: formData.name,
-            notes: `Store: ${formData.selectedStore}`,
+            address: selectedStoreData ? `${selectedStoreData.name}, ${selectedStoreData.address}` : 'Store Pickup',
+            notes: formData.selectedStore ? `Store Pickup ID: ${formData.selectedStore}` : '',
             items: order.items.map(item => ({
               productId: item.productId,
               quantity: item.quantity,
-              price: item.price,
-              weight: item.variantValue
+              price: item.price
             }))
           })
         })
@@ -153,30 +159,39 @@ export default function CheckoutPage() {
           // Update order with database ID
           order.id = data.order?.id || order.id
           order.orderNumber = data.order?.orderNumber || order.orderNumber
+          order.status = data.order?.status || order.status
+
+          // Also store order in localStorage for user's order history fallback
+          const localOrders = JSON.parse(localStorage.getItem('orders') || '[]')
+          localOrders.push(order)
+          localStorage.setItem('orders', JSON.stringify(localOrders))
+
+          // Clear cart
+          clearCart()
+
+          // Show success
+          const storeName = stores.find(s => s.id === formData.selectedStore)?.name
+          toast.success(`Order ${order.orderNumber} confirmed!`, {
+            description: `Pick up from ${storeName}. Total: ₹${grandTotal}`
+          })
+
+          // Redirect to success page
+          setTimeout(() => {
+            router.push('/?order=success')
+          }, 1500)
+        } else {
+          const errorData = await response.json()
+          console.error('API order save failed:', errorData)
+          toast.error(`Order failed: ${errorData.error || 'Please check your details'}`)
+          setLoading(false)
+          return // STOP HERE
         }
       } catch (apiError) {
-        console.error('API order save failed, using local storage:', apiError)
+        console.error('API order save failed:', apiError)
+        toast.error('Connection error. Could not save order.')
+        setLoading(false)
+        return // STOP HERE
       }
-
-      // Also store order in localStorage for user's order history
-      const localOrders = JSON.parse(localStorage.getItem('orders') || '[]')
-      localOrders.push(order)
-      localStorage.setItem('orders', JSON.stringify(localOrders))
-
-      // Clear cart
-      clearCart()
-
-      // Show success
-      const storeName = stores.find(s => s.id === formData.selectedStore)?.name
-      toast.success(`Order ${order.orderNumber} confirmed!`, {
-        description: `Pick up from ${storeName}. Total: ₹${grandTotal}`
-      })
-
-      // Redirect to success page
-      setTimeout(() => {
-        router.push('/?order=success')
-      }, 1500)
-
     } catch (error) {
       console.error('Checkout error:', error)
       toast.error('Failed to place order', {

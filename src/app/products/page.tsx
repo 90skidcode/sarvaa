@@ -14,6 +14,7 @@ interface Product {
   description: string
   price: number
   image: string
+  images?: string | null
   stock: number
   weights?: string | null
   featured: boolean
@@ -176,7 +177,7 @@ function ProductsContent() {
 
         {/* Products Grid */}
         {loading && (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={`product-skeleton-${i+1}`} className="bg-white rounded-lg h-96 animate-pulse" />
             ))}
@@ -202,22 +203,36 @@ function ProductsContent() {
               )}
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((product) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+               {products.map((product) => {
+                // Parse additional images
+                let additionalImages: string[] = []
+                if (product.images) {
+                  try {
+                    additionalImages = JSON.parse(product.images)
+                  } catch (e) {
+                    // Ignore parsing errors
+                  }
+                }
+
+                return (
                 <ProductCard
                   key={product.id}
                   id={product.id}
+                  slug={product.slug}
                   name={product.name}
                   description={product.description}
                   price={product.price}
                   image={product.image}
+                  images={additionalImages}
                   stock={product.stock}
                   weights={product.weights}
                   badge={product.featured ? 'Bestseller' : undefined}
                   rating={4.8}
                   reviews={Math.floor(Math.random() * 500) + 100}
                 />
-              ))}
+                )
+              })}
             </div>
           </>
         )}

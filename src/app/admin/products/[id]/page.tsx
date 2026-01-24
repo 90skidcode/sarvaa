@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { ArrowLeft, Plus, Trash2, Upload } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Upload, X } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -44,6 +44,7 @@ interface Product {
     id: string
     name: string
   }
+  images: string | null
 }
 
 export default function EditProductPage() {
@@ -58,6 +59,8 @@ export default function EditProductPage() {
   const [saving, setSaving] = useState(false)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
+  const [additionalImageFiles, setAdditionalImageFiles] = useState<File[]>([])
+  const [additionalImagePreviews, setAdditionalImagePreviews] = useState<string[]>([])
   
   const [formData, setFormData] = useState({
     name: '',
@@ -99,6 +102,19 @@ export default function EditProductPage() {
           categoryId: productData.category.id
         })
         setImagePreview(productData.image)
+
+        // Load existing additional images
+        if (productData.images) {
+          try {
+            const existingImages = JSON.parse(productData.images)
+            if (Array.isArray(existingImages)) {
+              setAdditionalImagePreviews(existingImages)
+              setAdditionalImageFiles(new Array(existingImages.length).fill(null))
+            }
+          } catch (e) {
+            console.error('Error parsing images:', e)
+          }
+        }
 
         // Handle variants
         if (productData.weights) {
@@ -162,6 +178,31 @@ export default function EditProductPage() {
     setImagePreview(product?.image || '')
   }
 
+  const handleAdditionalImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    const maxAdditional = 5
+    
+    if (additionalImagePreviews.length + files.length > maxAdditional) {
+      toast.error(`Maximum ${maxAdditional} additional images allowed`)
+      return
+    }
+
+    files.forEach(file => {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setAdditionalImagePreviews(prev => [...prev, reader.result as string])
+      }
+      reader.readAsDataURL(file)
+    })
+    
+    setAdditionalImageFiles(prev => [...prev, ...files])
+  }
+
+  const removeAdditionalImage = (index: number) => {
+    setAdditionalImageFiles(prev => prev.filter((_, i) => i !== index))
+    setAdditionalImagePreviews(prev => prev.filter((_, i) => i !== index))
+  }
+
   const addVariant = () => {
     setVariants([...variants, { type: units[0]?.name || 'Grams', value: '', price: '' }])
   }
@@ -189,18 +230,38 @@ export default function EditProductPage() {
     const filteredVariants = variants.filter(v => v.value && v.price)
 
     try {
-      let imageUrl = product?.image || ''
-
-      if (imageFile) {
+      const { url: finalImageUrl } = imageFile ? await (async () => {
         const formDataImage = new FormData()
         formDataImage.append('file', imageFile)
         const uploadResponse = await fetch('/api/upload', {
           method: 'POST',
           body: formDataImage
         })
-        if (uploadResponse.ok) {
-          const { url } = await uploadResponse.json()
-          imageUrl = url
+        if (!uploadResponse.ok) throw new Error('Failed to upload primary image')
+        return await uploadResponse.json()
+      })() : { url: product?.image || '' }
+
+      // Upload ONLY new additional images and maintain order
+      const finalAdditionalUrls: string[] = []
+      for (let i = 0; i < additionalImagePreviews.length; i++) {
+        const file = additionalImageFiles[i]
+        const preview = additionalImagePreviews[i]
+
+        if (file) {
+          // It's a new file, upload it
+          const additionalFormData = new FormData()
+          additionalFormData.append('file', file)
+          const uploadRes = await fetch('/api/upload', {
+            method: 'POST',
+            body: additionalFormData
+          })
+          if (uploadRes.ok) {
+            const { url } = await uploadRes.json()
+            finalAdditionalUrls.push(url)
+          }
+        } else if (preview.startsWith('http') || preview.startsWith('/')) {
+          // It's an existing URL, keep it
+          finalAdditionalUrls.push(preview)
         }
       }
 
@@ -213,7 +274,8 @@ export default function EditProductPage() {
           ...formData,
           price: Number.parseFloat(formData.price),
           stock: Number.parseInt(formData.stock),
-          image: imageUrl,
+          image: finalImageUrl,
+          images: finalAdditionalUrls.length > 0 ? JSON.stringify(finalAdditionalUrls) : null,
           isActive: formData.isActive,
           weights: filteredVariants.length > 0 ? filteredVariants.map(v => ({ 
             type: v.type, 
@@ -227,7 +289,8 @@ export default function EditProductPage() {
         toast.success('Product updated successfully')
         router.push('/admin/products')
       } else {
-        toast.error('Failed to update product')
+        const errorData = await response.json()
+        toast.error(errorData.message || errorData.error || 'Failed to update product')
       }
     } catch (error) {
       console.error('Error updating product:', error)
@@ -325,6 +388,53 @@ export default function EditProductPage() {
                     required
                   />
                 </div>
+              </div>
+
+              {/* Additional Images Gallery */}
+              <div className="space-y-2">
+                <Label className="text-gray-600 font-bold ml-1">Additional Images (Optional)</Label>
+                <p className="text-xs text-gray-400 ml-1">Add up to 5 more images for your product gallery</p>
+                
+                {additionalImagePreviews.length > 0 && (
+                  <div className="grid grid-cols-5 gap-3 mb-4 mt-2">
+                    {additionalImagePreviews.map((preview, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={preview}
+                          alt={`Additional ${index + 1}`}
+                          className="w-full aspect-square object-cover rounded-xl shadow-md border border-gray-100"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeAdditionalImage(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {additionalImagePreviews.length < 5 && (
+                  <div className="border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center bg-gray-50/30 hover:bg-gray-50 transition-colors">
+                    <label htmlFor="additional-images" className="cursor-pointer">
+                      <Plus className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm font-medium text-gray-600">
+                        Add More Images ({additionalImagePreviews.length}/5)
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 10MB each</p>
+                    </label>
+                    <input
+                      id="additional-images"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleAdditionalImagesChange}
+                      className="hidden"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">

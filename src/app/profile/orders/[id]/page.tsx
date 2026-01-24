@@ -3,33 +3,31 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { isAuthenticated } from '@/lib/api-client'
 import { ArrowLeft, Calendar, CreditCard, Package, Phone, Store, User } from 'lucide-react'
 import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 interface OrderItem {
   productId: string
-  name: string
   quantity: number
-  variantType: string
-  variantValue: string
   price: number
+  weight: string | null
+  product: {
+    id: string
+    name: string
+    image: string
+  }
 }
 
 interface Order {
   id: string
   orderNumber: string
   items: OrderItem[]
-  customer: {
-    name: string
-    email: string
-    phone: string
-    selectedStore: string
-  }
-  orderType: string
-  storeId: string
+  name: string | null
+  email: string | null
+  phone: string
+  address: string | null
   total: number
   paymentMethod: string
   status: string
@@ -41,12 +39,12 @@ const statusColors: Record<string, string> = {
   confirmed: 'bg-blue-100 text-blue-800 border-blue-200',
   preparing: 'bg-purple-100 text-purple-800 border-purple-200',
   ready: 'bg-green-100 text-green-800 border-green-200',
+  delivered: 'bg-gray-100 text-gray-800 border-gray-200',
   completed: 'bg-gray-100 text-gray-800 border-gray-200',
   cancelled: 'bg-red-100 text-red-800 border-red-200',
 }
 
 export default function OrderDetailsPage() {
-  const router = useRouter()
   const params = useParams()
   const orderId = params.id as string
   
@@ -54,22 +52,24 @@ export default function OrderDetailsPage() {
   const [order, setOrder] = useState<Order | null>(null)
 
   useEffect(() => {
-    if (!isAuthenticated()) {
-      router.push('/login')
-      return
+    const fetchOrder = async () => {
+      try {
+        const response = await fetch(`/api/orders/${orderId}`)
+        const data = await response.json()
+        if (response.ok && data.order) {
+          setOrder(data.order)
+        }
+      } catch (error) {
+        console.error('Error fetching order:', error)
+      } finally {
+        setLoading(false)
+      }
     }
 
-    // Fetch order from localStorage (in production, fetch from API)
-    const storedOrders = JSON.parse(localStorage.getItem('orders') || '[]')
-    const foundOrder = storedOrders.find((o: Order, index: number) => 
-      o.id === orderId || o.orderNumber === orderId || String(index) === orderId
-    )
-    
-    if (foundOrder) {
-      setOrder(foundOrder)
+    if (orderId) {
+      fetchOrder()
     }
-    setLoading(false)
-  }, [router, orderId])
+  }, [orderId])
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-IN', {
@@ -142,15 +142,22 @@ export default function OrderDetailsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {order.items.map((item) => (
-                  <div key={`${item.productId}-${item.variantValue}`} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                    <div>
-                      <p className="font-semibold text-gray-900">{item.name}</p>
-                      <p className="text-sm text-gray-500">
-                        {item.variantValue} {item.variantType !== 'Default' ? item.variantType : ''}
+                  <div key={item.productId} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                    <div className="w-20 h-20 relative rounded-lg overflow-hidden flex-shrink-0 bg-white">
+                      <img
+                        src={item.product?.image}
+                        alt={item.product?.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-bold text-gray-900 leading-tight mb-1">{item.product?.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {item.weight && <span>{item.weight} • </span>}
+                        Qty: {item.quantity} × ₹{item.price.toFixed(2)}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                       <p className="font-bold text-[#743181]">₹{(item.price * item.quantity).toFixed(2)}</p>
                     </div>
                   </div>
@@ -186,7 +193,7 @@ export default function OrderDetailsPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="font-semibold text-gray-900">Store Pickup</p>
-                  <p className="text-sm text-gray-500">Ready for pickup</p>
+                  <p className="text-sm text-gray-500 line-clamp-2">{order.address || 'Sarvaa Sweets Main'}</p>
                 </CardContent>
               </Card>
 
@@ -199,14 +206,14 @@ export default function OrderDetailsPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <p className="font-semibold text-gray-900">{order.customer.name}</p>
-                  {order.customer.email && (
-                    <p className="text-sm text-gray-500">{order.customer.email}</p>
+                  <p className="font-semibold text-gray-900">{order.name || 'Guest User'}</p>
+                  {order.email && (
+                    <p className="text-sm text-gray-500">{order.email}</p>
                   )}
-                  {order.customer.phone && (
+                  {order.phone && (
                     <p className="text-sm text-gray-500 flex items-center gap-1">
                       <Phone className="h-3 w-3" />
-                      +91 {order.customer.phone}
+                      +91 {order.phone}
                     </p>
                   )}
                 </CardContent>

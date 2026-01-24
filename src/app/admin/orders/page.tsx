@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, ClipboardList, Search } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 interface Order {
   id: string
@@ -16,6 +17,8 @@ interface Order {
   total: number
   phone: string
   address: string
+  name: string | null
+  email: string | null
   notes: string | null
   createdAt: string
   updatedAt: string
@@ -23,7 +26,7 @@ interface Order {
     id: string
     name: string
     email: string
-  }
+  } | null
   items: {
     id: string
     quantity: number
@@ -56,7 +59,8 @@ export default function AdminOrdersPage() {
 
       const response = await fetch(url)
       const data = await response.json()
-      setOrders(Array.isArray(data) ? data : [])
+      // Handle response format from API { orders: [...] }
+      setOrders(Array.isArray(data.orders) ? data.orders : [])
     } catch (error) {
       console.error('Error fetching orders:', error)
     } finally {
@@ -75,10 +79,14 @@ export default function AdminOrdersPage() {
       })
 
       if (response.ok) {
+        toast.success(`Order ${status} updated`)
         fetchOrders()
+      } else {
+        toast.error('Failed to update status')
       }
     } catch (error) {
       console.error('Error updating order status:', error)
+      toast.error('Something went wrong')
     }
   }
 
@@ -96,8 +104,10 @@ export default function AdminOrdersPage() {
 
   const filteredOrders = orders.filter(order =>
     order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    order.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    order.user.email.toLowerCase().includes(searchQuery.toLowerCase())
+    (order.user?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (order.user?.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (order.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (order.email || '').toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   const statusCounts = {
@@ -236,7 +246,7 @@ export default function AdminOrdersPage() {
                             </Badge>
                           </div>
                           <p className="text-gray-600">
-                            <span className="font-medium">{order.user.name}</span> ({order.user.email})
+                            <span className="font-medium">{order.user?.name || order.name || 'Guest'}</span> ({order.user?.email || order.email || 'N/A'})
                           </p>
                         </div>
                         <div className="text-right">

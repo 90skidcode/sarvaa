@@ -44,6 +44,7 @@ export async function PUT(
     const productId = params.id;
 
     const body = await request.json();
+    console.log("UPDATE PRODUCT BODY:", JSON.stringify(body, null, 2));
     const {
       name,
       slug,
@@ -55,6 +56,7 @@ export async function PUT(
       isActive,
       categoryId,
       weights,
+      images,
     } = body;
 
     const product = await db.product.update({
@@ -69,6 +71,7 @@ export async function PUT(
         ...(featured !== undefined && { featured }),
         ...(isActive !== undefined && { isActive }),
         ...(categoryId && { categoryId }),
+        ...(images !== undefined && { images }),
         ...(weights !== undefined && {
           weights: (function () {
             if (!weights) return null;
@@ -89,8 +92,9 @@ export async function PUT(
     return NextResponse.json(
       {
         error: "Failed to update product",
-        message: error.message,
-        details: error.code,
+        message: error.message || "Unknown error occurred",
+        code: error.code,
+        meta: error.meta,
       },
       { status: 500 },
     );

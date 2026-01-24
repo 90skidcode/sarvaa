@@ -15,6 +15,7 @@ interface Product {
   description: string
   price: number
   image: string
+  images?: string | null
   stock: number
   featured: boolean
   categoryId: string
@@ -150,8 +151,8 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {loading && Array.from({ length: 3 }).map((_, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {loading && Array.from({ length: 4 }).map((_, i) => (
               <div key={`product-skeleton-${i+1}`} className="animate-pulse bg-purple-50 rounded-2xl h-[450px]"></div>
             ))}
             
@@ -159,22 +160,35 @@ export default function Home() {
               <p className="col-span-full text-center text-gray-500 font-medium">No featured products found</p>
             )}
             
-            {!loading && featuredProducts.length > 0 && featuredProducts.map((product) => (
+            {!loading && featuredProducts.length > 0 && featuredProducts.map((product) => {
+              // Parse additional images
+              let additionalImages: string[] = []
+              if (product.images) {
+                try {
+                  additionalImages = JSON.parse(product.images)
+                } catch (e) {
+                  // Ignore parsing errors
+                }
+              }
+
+              return (
                 <ProductCard
                   key={product.id}
                   id={product.id}
+                  slug={product.slug}
                   name={product.name}
                   description={product.description}
                   price={product.price}
                   image={product.image}
+                  images={additionalImages}
                   stock={product.stock}
                   weights={product.weights}
                   badge={product.badge}
                   rating={product.rating}
                   reviews={product.reviews}
                 />
-              ))
-            }
+              )
+            })}
           </div>
         </div>
 

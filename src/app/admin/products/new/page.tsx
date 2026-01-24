@@ -36,6 +36,8 @@ export default function NewProductPage() {
   const [loading, setLoading] = useState(false)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
+  const [additionalImageFiles, setAdditionalImageFiles] = useState<File[]>([])
+  const [additionalImagePreviews, setAdditionalImagePreviews] = useState<string[]>([])
   
   const [formData, setFormData] = useState({
     name: '',
@@ -97,6 +99,31 @@ export default function NewProductPage() {
     setImagePreview('')
   }
 
+  const handleAdditionalImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    const maxAdditional = 5
+    
+    if (additionalImageFiles.length + files.length > maxAdditional) {
+      toast.error(`Maximum ${maxAdditional} additional images allowed`)
+      return
+    }
+
+    files.forEach(file => {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setAdditionalImagePreviews(prev => [...prev, reader.result as string])
+      }
+      reader.readAsDataURL(file)
+    })
+    
+    setAdditionalImageFiles(prev => [...prev, ...files])
+  }
+
+  const removeAdditionalImage = (index: number) => {
+    setAdditionalImageFiles(prev => prev.filter((_, i) => i !== index))
+    setAdditionalImagePreviews(prev => prev.filter((_, i) => i !== index))
+  }
+
   const addVariant = () => {
     setVariants([...variants, { type: units[0]?.name || 'Grams', value: '', price: '' }])
   }
@@ -120,7 +147,7 @@ export default function NewProductPage() {
     e.preventDefault()
     
     if (!imageFile) {
-      toast.error('Please select an image')
+      toast.error('Please select a primary image')
       return
     }
 
@@ -130,7 +157,7 @@ export default function NewProductPage() {
     setLoading(true)
 
     try {
-      // First upload the image
+      // Upload primary image
       const formDataImage = new FormData()
       formDataImage.append('file', imageFile)
 
@@ -140,12 +167,29 @@ export default function NewProductPage() {
       })
 
       if (!uploadResponse.ok) {
-        throw new Error('Failed to upload image')
+        throw new Error('Failed to upload primary image')
       }
 
       const { url: imageUrl } = await uploadResponse.json()
 
-      // Then create the product
+      // Upload additional images
+      const additionalImageUrls: string[] = []
+      for (const additionalFile of additionalImageFiles) {
+        const additionalFormData = new FormData()
+        additionalFormData.append('file', additionalFile)
+        
+        const additionalUploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: additionalFormData
+        })
+        
+        if (additionalUploadResponse.ok) {
+          const { url } = await additionalUploadResponse.json()
+          additionalImageUrls.push(url)
+        }
+      }
+
+      // Create the product
       const response = await fetch('/api/products', {
         method: 'POST',
         headers: {
@@ -156,6 +200,7 @@ export default function NewProductPage() {
           price: Number.parseFloat(formData.price),
           stock: Number.parseInt(formData.stock),
           image: imageUrl,
+          images: additionalImageUrls.length > 0 ? JSON.stringify(additionalImageUrls) : null,
           isActive: formData.isActive,
           weights: filteredVariants.length > 0 ? filteredVariants.map(v => ({ 
             type: v.type, 
@@ -241,6 +286,53 @@ export default function NewProductPage() {
                     required
                   />
                 </div>
+              </div>
+
+              {/* Additional Images Gallery */}
+              <div className="space-y-2">
+                <Label>Additional Images (Optional)</Label>
+                <p className="text-xs text-gray-500">Add up to 5 more images for your product gallery</p>
+                
+                {additionalImagePreviews.length > 0 && (
+                  <div className="grid grid-cols-5 gap-3 mb-4">
+                    {additionalImagePreviews.map((preview, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={preview}
+                          alt={`Additional ${index + 1}`}
+                          className="w-full aspect-square object-cover rounded-lg shadow-md"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeAdditionalImage(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {additionalImageFiles.length < 5 && (
+                  <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center bg-gray-50/30 hover:bg-gray-50 transition-colors">
+                    <label htmlFor="additional-images" className="cursor-pointer">
+                      <Plus className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm font-medium text-gray-600">
+                        Add More Images ({additionalImageFiles.length}/5)
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 10MB each</p>
+                    </label>
+                    <input
+                      id="additional-images"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleAdditionalImagesChange}
+                      className="hidden"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Name and Slug */}

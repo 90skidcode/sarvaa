@@ -1,9 +1,17 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Button } from './ui/button'
 
 export function Footer() {
+  const pathname = usePathname()
+  
+  // Don't show footer on admin pages
+  if (pathname?.startsWith('/admin')) {
+    return null
+  }
+
   return (
     <footer className="relative mt-20">
       {/* Wavy/Scalloped Top Border */}

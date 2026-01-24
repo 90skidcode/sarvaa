@@ -31,7 +31,7 @@ export default function AdminDashboard() {
       const usersData = await usersRes.json()
 
       const orders = ordersData.orders || (Array.isArray(ordersData) ? ordersData : [])
-      const productsTotal = productsData.pagination?.total || (Array.isArray(productsData) ? productsData.length : 0)
+      const productsTotal = productsData.pagination?.total || (Array.isArray(productsData.products) ? productsData.products.length : (Array.isArray(productsData) ? productsData.length : 0))
       const usersTotal = usersData.total || (Array.isArray(usersData) ? usersData.length : 0)
       const ordersTotal = ordersData.pagination?.total || orders.length
 
@@ -53,7 +53,7 @@ export default function AdminDashboard() {
       const response = await fetch('/api/orders?limit=5')
       const data = await response.json()
       const orders = data.orders || (Array.isArray(data) ? data : [])
-      setRecentOrders(orders.slice(0, 5))
+      setRecentOrders(orders)
     } catch (error) {
       console.error('Error fetching recent orders:', error)
     }
@@ -158,8 +158,8 @@ export default function AdminDashboard() {
                     <tr key={order.id} className="hover:bg-gray-50 transition-colors">
                       <td className="py-4 px-6 font-medium text-gray-900">{order.orderNumber}</td>
                       <td className="py-4 px-6">
-                        <div className="text-sm font-medium text-gray-900">{order.userName || order.name || 'Guest'}</div>
-                        <div className="text-xs text-gray-500">{order.userEmail || order.email}</div>
+                        <div className="text-sm font-medium text-gray-900">{order.name || order.user?.name || 'Guest'}</div>
+                        <div className="text-xs text-gray-500">{order.email || order.user?.email}</div>
                       </td>
                       <td className="py-4 px-6 font-bold text-[#743181]">₹{order.total}</td>
                       <td className="py-4 px-6">
