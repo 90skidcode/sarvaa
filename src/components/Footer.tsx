@@ -41,8 +41,8 @@ export function Footer() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 text-gray-700">
             <div>
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-white rounded-lg shadow-sm">
-                  <img src="/images/sarvaa-logo-icon.jpg" alt="Sarvaa Logo" className="w-8 h-8" />
+                <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-100">
+                  <img src="/sarvaa-logo-full.jpg" alt="Sarvaa Logo" className="w-12 h-8 object-contain" />
                 </div>
                 <span className="text-gray-900 text-xl font-bold tracking-tight">Sarvaa Sweets</span>
               </div>

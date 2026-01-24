@@ -33,16 +33,16 @@ model User {
 }
 
 model Category {
-  id          String    @id @default(cuid())
-  name        String    @unique
-  slug        String    @unique
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
   description String?
   image       String?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  products    Product[]
+  products Product[]
 }
 
 model Product {
@@ -50,26 +50,26 @@ model Product {
   name        String
   slug        String   @unique
   description String
-  price       Float    // Base price for default weight
-  image       String   // Primary image (for backward compatibility)
-  images      String?  // JSON array of additional images: ["url1", "url2", "url3"]
+  price       Float // Base price for default weight
+  image       String // Primary image (for backward compatibility)
+  images      String? // JSON array of additional images: ["url1", "url2", "url3"]
   stock       Int      @default(0)
   featured    Boolean  @default(false)
   isActive    Boolean  @default(true)
   categoryId  String
-  weights     String?  // JSON: [{weight:"250g",price:349},{weight:"500g",price:649},{weight:"1kg",price:1199}]
+  weights     String? // JSON: [{weight:"250g",price:349},{weight:"500g",price:649},{weight:"1kg",price:1199}]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  category    Category     @relation(fields: [categoryId], references: [id])
-  orderItems  OrderItem[]
-  cartItems   CartItem[]
+  category   Category    @relation(fields: [categoryId], references: [id])
+  orderItems OrderItem[]
+  cartItems  CartItem[]
 }
 
 model Order {
-  id          String      @id @default(cuid())
-  orderNumber String      @unique
-  status      String      @default("pending") // pending, confirmed, preparing, ready, delivered, cancelled
+  id          String   @id @default(cuid())
+  orderNumber String   @unique
+  status      String   @default("pending") // pending, confirmed, preparing, ready, delivered, cancelled
   total       Float
   userId      String?
   phone       String
@@ -77,11 +77,24 @@ model Order {
   name        String?
   address     String?
   notes       String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  user        User?       @relation(fields: [userId], references: [id])
-  items       OrderItem[]
+  user          User?            @relation(fields: [userId], references: [id])
+  store         Store?           @relation(fields: [storeId], references: [id])
+  items         OrderItem[]
+  statusHistory OrderStatusLog[]
+  storeId       String?
+}
+
+model OrderStatusLog {
+  id        String   @id @default(cuid())
+  orderId   String
+  status    String // pending, confirmed, preparing, ready, delivered, cancelled
+  notes     String?
+  createdAt DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
 
 model OrderItem {
@@ -90,75 +103,76 @@ model OrderItem {
   productId String
   quantity  Int
   price     Float
-  weight    String?  // Selected weight (e.g., "500g")
+  weight    String? // Selected weight (e.g., "500g")
   createdAt DateTime @default(now())
 
-  order     Order    @relation(fields: [orderId], references: [id])
-  product   Product  @relation(fields: [productId], references: [id])
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 }
 
 model CartItem {
   id        String   @id @default(cuid())
   userId    String?
-  sessionId String?  // For guest users
+  sessionId String? // For guest users
   productId String
   quantity  Int
-  weight    String?  // Selected weight (e.g., "500g")
+  weight    String? // Selected weight (e.g., "500g")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user      User?    @relation(fields: [userId], references: [id])
-  product   Product  @relation(fields: [productId], references: [id])
+  user    User?   @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 
   @@unique([userId, productId, weight])
 }
 
 model Store {
-  id          String   @id @default(cuid())
-  name        String
-  address     String
-  phone       String?
-  email       String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  name      String
+  address   String
+  phone     String?
+  email     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
 }
 
 model Unit {
-  id          String   @id @default(cuid())
-  name        String   @unique
+  id           String   @id @default(cuid())
+  name         String   @unique
   abbreviation String
-  isActive    Boolean  @default(true)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Settings {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String // JSON string for complex values
+  description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
-model Settings {
-  id               String   @id @default(cuid())
-  key              String   @unique
-  value            String   // JSON string for complex values
-  description      String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-}
-
 model Banner {
-  id            String   @id @default(cuid())
-  title         String
-  desktopImage  String   // Desktop banner image path (1920x768)
-  mobileImage   String?  // Mobile banner image path (768x512)
-  link          String?  // Optional link when banner is clicked
-  isActive      Boolean  @default(true)
-  displayOrder  Int      @default(0) // Order in which banners appear
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String   @id @default(cuid())
+  title        String
+  desktopImage String // Desktop banner image path (1920x768)
+  mobileImage  String? // Mobile banner image path (768x512)
+  link         String? // Optional link when banner is clicked
+  isActive     Boolean  @default(true)
+  displayOrder Int      @default(0) // Order in which banners appear
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model UserProfile {
   id          String   @id @default(cuid())
   firebaseUid String   @unique // Firebase user ID
   phoneNumber String   @unique // Phone number with country code
-  phone       String?  // Phone number without country code
+  phone       String? // Phone number without country code
   name        String?
   email       String?
   address     String?

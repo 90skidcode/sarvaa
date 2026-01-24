@@ -3,7 +3,7 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Calendar, CreditCard, Package, Phone, Store, User } from 'lucide-react'
+import { ArrowLeft, Calendar, CheckCircle2, Clock, CreditCard, Package, Phone, Store, User } from 'lucide-react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -32,6 +32,10 @@ interface Order {
   paymentMethod: string
   status: string
   createdAt: string
+  statusHistory: {
+    status: string
+    createdAt: string
+  }[]
 }
 
 const statusColors: Record<string, string> = {
@@ -130,6 +134,83 @@ export default function OrderDetailsPage() {
               <p className="text-gray-500 text-sm mt-1">Order placed on {formatDate(order.createdAt)}</p>
             </div>
           </div>
+
+          {/* New Tracking Timeline Card */}
+          <Card className="mb-8 border-none shadow-lg overflow-hidden bg-white">
+            <CardContent className="p-8">
+              <div className="relative">
+                {/* Connecting LineBackground */}
+                <div className="absolute top-5 left-0 w-full h-0.5 bg-gray-100 -translate-y-1/2"></div>
+                
+                {/* Active Progress Line */}
+                <div 
+                  className="absolute top-5 left-0 h-0.5 bg-[#743181] -translate-y-1/2 transition-all duration-700 ease-in-out"
+                  style={{ 
+                    width: (() => {
+                      const percentages: Record<string, string> = {
+                        pending: '0%',
+                        confirmed: '25%',
+                        preparing: '50%',
+                        ready: '75%',
+                        delivered: '100%'
+                      };
+                      return percentages[order.status] || '0%';
+                    })()
+                  }}
+                ></div>
+
+                <div className="flex justify-between relative z-10">
+                  {(() => {
+                    const steps = [
+                      { id: 'pending', label: 'Ordered', icon: Clock },
+                      { id: 'confirmed', label: 'Confirmed', icon: CheckCircle2 },
+                      { id: 'preparing', label: 'Preparing', icon: Package },
+                      { id: 'ready', label: 'Ready', icon: CheckCircle2 },
+                      { id: 'delivered', label: 'Delivered', icon: CheckCircle2 }
+                    ];
+
+                    const currentIdx = steps.findIndex(s => s.id === order.status);
+
+                    return steps.map((step, idx) => {
+                      const isCompleted = currentIdx >= idx;
+                      const isCurrent = currentIdx === idx;
+                      const logTime = step.id === 'pending' 
+                        ? order.createdAt 
+                        : order.statusHistory?.find(h => h.status === step.id)?.createdAt;
+
+                      return (
+                        <div key={step.id} className="flex flex-col items-center">
+                          <div className={`
+                            w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-500
+                            ${isCompleted ? 'bg-[#743181] border-[#743181] text-white shadow-lg' : 'bg-white border-gray-200 text-gray-300'}
+                            ${isCurrent ? 'ring-4 ring-purple-100 scale-110' : ''}
+                          `}>
+                            <step.icon className={`h-5 w-5 ${isCurrent ? 'animate-pulse' : ''}`} />
+                          </div>
+                          <div className="mt-3 flex flex-col items-center">
+                            <span className={`
+                              text-xs md:text-sm font-bold transition-colors duration-500 whitespace-nowrap
+                              ${isCompleted ? 'text-[#743181]' : 'text-gray-400'}
+                              ${isCurrent ? 'text-gray-900' : ''}
+                            `}>
+                              {step.label}
+                            </span>
+                            {logTime && (
+                              <span className="text-[10px] text-gray-500 whitespace-nowrap mt-1 text-center font-medium">
+                                {new Date(logTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                                <br />
+                                {new Date(logTime).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           <div className="grid md:grid-cols-3 gap-6">
             {/* Order Items */}

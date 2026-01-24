@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 
 interface MobileMenuProps {
-  className?: string
+  readonly className?: string
 }
 
 export function MobileMenu({ className }: MobileMenuProps) {
@@ -48,8 +48,14 @@ export function MobileMenu({ className }: MobileMenuProps) {
           {/* Menu Panel */}
           <div className="fixed top-0 right-0 h-full w-64 bg-white shadow-2xl z-50 transform transition-transform duration-300 lg:hidden">
             <div className="p-6">
-              {/* Close Button */}
-              <div className="flex justify-end mb-8">
+              {/* Menu Header with Logo */}
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-8 rounded-lg overflow-hidden border border-gray-100 shadow-sm">
+                    <img src="/sarvaa-logo-full.jpg" alt="Sarvaa Logo" className="w-full h-full object-contain" />
+                  </div>
+                  <span className="text-gray-900 font-bold text-sm">Sarvaa</span>
+                </div>
                 <Button
                   variant="ghost"
                   size="icon"

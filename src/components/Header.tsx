@@ -5,11 +5,11 @@ import { MobileMenu } from '@/components/MobileMenu'
 import { SearchBar } from '@/components/SearchBar'
 import { Button } from '@/components/ui/button'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { getCurrentUser, isAuthenticated, logout } from '@/lib/api-client'
 import { ClipboardList, Heart, LogOut, User } from 'lucide-react'
@@ -34,14 +34,14 @@ export function Header() {
     checkAuth()
 
     // Listen for storage changes (login/logout from other tabs)
-    window.addEventListener('storage', checkAuth)
+    globalThis.addEventListener('storage', checkAuth)
     
     // Listen for custom user update event (profile changes in same tab)
-    window.addEventListener('userUpdated', checkAuth)
+    globalThis.addEventListener('userUpdated', checkAuth)
     
     return () => {
-      window.removeEventListener('storage', checkAuth)
-      window.removeEventListener('userUpdated', checkAuth)
+      globalThis.removeEventListener('storage', checkAuth)
+      globalThis.removeEventListener('userUpdated', checkAuth)
     }
   }, [])
   
@@ -59,11 +59,11 @@ export function Header() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between py-4">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative w-14 h-14 rounded-full overflow-hidden shadow-lg group-hover:scale-105 transition-transform">
+            <div className="relative w-16 h-12 rounded-xl overflow-hidden shadow-sm group-hover:scale-105 transition-transform border border-gray-100">
               <img
-                src="/images/sarvaa-logo-icon.jpg"
+                src="/sarvaa-logo-full.jpg"
                 alt="Sarvaa Sweets Logo"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             </div>
             <div>

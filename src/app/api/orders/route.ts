@@ -1,16 +1,23 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
-    const emailInput = searchParams.get("email");
+    let userId = searchParams.get("userId");
+    let emailInput = searchParams.get("email");
     const status = searchParams.get("status");
     const page = Number.parseInt(searchParams.get("page") || "1");
     const limitInput = searchParams.get("limit");
     const limit = limitInput ? Number.parseInt(limitInput) : null;
     const skip = limit ? (page - 1) * limit : undefined;
+
+    // Sanitize stringified null/undefined from client
+    if (userId === "null" || userId === "undefined" || !userId) userId = null;
+    if (emailInput === "null" || emailInput === "undefined" || !emailInput)
+      emailInput = null;
 
     console.log("FETCH ORDERS REQUEST:", {
       userId,
@@ -22,21 +29,16 @@ export async function GET(request: NextRequest) {
 
     const where: any = {};
 
-    // Build the query to find orders by ID OR by Email
     if (userId) {
-      // Find the user's registered email to also fetch their "guest" orders
       const user = await db.user.findUnique({
         where: { id: userId },
         select: { email: true },
       });
 
       const conditions: any[] = [{ userId: userId }];
-      if (user?.email) {
-        conditions.push({ email: user.email });
-      }
-      if (emailInput && emailInput !== user?.email) {
+      if (user?.email) conditions.push({ email: user.email });
+      if (emailInput && emailInput !== user?.email)
         conditions.push({ email: emailInput });
-      }
 
       where.OR = conditions;
     } else if (emailInput) {
@@ -59,6 +61,9 @@ export async function GET(request: NextRequest) {
             },
           },
           user: true,
+          statusHistory: {
+            orderBy: { createdAt: "asc" },
+          },
         },
         orderBy: {
           createdAt: "desc",
@@ -66,6 +71,13 @@ export async function GET(request: NextRequest) {
       }),
       db.order.count({ where }),
     ]);
+
+    console.log(
+      `API FIND ORDERS: Found ${orders.length} orders matching criteria.`,
+    );
+    if (orders.length > 0) {
+      console.log("Sample Order ID:", orders[0].id, orders[0].orderNumber);
+    }
 
     return NextResponse.json({
       orders,
@@ -136,18 +148,26 @@ export async function POST(request: NextRequest) {
       data: {
         orderNumber,
         total,
-        userId: validatedUserId,
         phone,
         email,
         name,
         address,
         notes,
+        ...(validatedUserId
+          ? { user: { connect: { id: validatedUserId } } }
+          : {}),
         items: {
           create: items.map((item: any) => ({
             productId: item.productId,
             quantity: item.quantity,
             price: item.price,
           })),
+        },
+        statusHistory: {
+          create: {
+            status: "pending",
+            notes: "Order placed successfully",
+          },
         },
       },
       include: {
@@ -157,6 +177,9 @@ export async function POST(request: NextRequest) {
           },
         },
         user: true,
+        statusHistory: {
+          orderBy: { createdAt: "asc" },
+        },
       },
     });
 

@@ -18,6 +18,9 @@ export async function GET(
           },
         },
         user: true,
+        statusHistory: {
+          orderBy: { createdAt: "asc" },
+        },
       },
     });
 
@@ -63,6 +66,19 @@ export async function PUT(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
+    // Create status history log
+    try {
+      await db.orderStatusLog.create({
+        data: {
+          orderId: orderData.id,
+          status: status,
+          notes: `Status updated to ${status}`,
+        },
+      });
+    } catch (logError) {
+      console.error("FAILED TO CREATE STATUS LOG:", logError);
+    }
+
     const order = await db.order.update({
       where: { id: orderData.id },
       data: { status },
@@ -73,6 +89,9 @@ export async function PUT(
           },
         },
         user: true,
+        statusHistory: {
+          orderBy: { createdAt: "asc" },
+        },
       },
     });
 
