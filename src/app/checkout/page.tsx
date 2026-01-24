@@ -146,6 +146,7 @@ export default function CheckoutPage() {
             name: formData.name,
             address: selectedStoreData ? `${selectedStoreData.name}, ${selectedStoreData.address}` : 'Store Pickup',
             notes: formData.selectedStore ? `Store Pickup ID: ${formData.selectedStore}` : '',
+            storeId: formData.selectedStore || null,
             items: order.items.map(item => ({
               productId: item.productId,
               quantity: item.quantity,

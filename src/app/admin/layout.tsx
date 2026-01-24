@@ -1,9 +1,12 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Cake, ClipboardList, ImageIcon, LayoutDashboard, LogOut, Package, Store, Tag, Users } from 'lucide-react'
+import { getCurrentUser, logout } from '@/lib/api-client'
+import { Cake, ClipboardList, ImageIcon, LayoutDashboard, Lock, LogOut, Package, Store, Tag, Users } from 'lucide-react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 interface AdminLayoutProps {
   readonly children: React.ReactNode
@@ -13,6 +16,55 @@ export default function AdminLayout({
   children,
 }: AdminLayoutProps) {
   const pathname = usePathname()
+  const router = useRouter()
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    // Skip auth check for login page itself
+    if (pathname === '/admin/login') {
+      setIsAdmin(true)
+      return
+    }
+
+    const checkAuth = () => {
+      const user = getCurrentUser()
+      if (!user || user.role !== 'admin') {
+        setIsAdmin(false)
+        router.push('/admin/login')
+      } else {
+        setIsAdmin(true)
+      }
+    }
+
+    checkAuth()
+  }, [pathname, router])
+
+  const handleLogout = () => {
+    logout()
+    // logout() from api-client already clears storage and redirects to /login
+    // But for admin we might want to redirect specifically to /admin/login
+    localStorage.removeItem('user')
+    localStorage.removeItem('authToken')
+    toast.success('Signed out successfully')
+    router.push('/admin/login')
+  }
+
+  // Show nothing while checking auth
+  if (isAdmin === null && pathname !== '/admin/login') {
+    return (
+      <div className="min-h-screen bg-[#f5f0f7] flex items-center justify-center font-outfit">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#743181] mx-auto mb-4"></div>
+          <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">Verifying Terminal Access...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // If on login page, just show children without the sidebar/header
+  if (pathname === '/admin/login') {
+    return <>{children}</>
+  }
 
   const isActive = (path: string) => {
     if (path === '/admin') {
@@ -34,20 +86,21 @@ export default function AdminLayout({
         { label: 'Products', href: '/admin/products', icon: Package },
         { label: 'Categories', href: '/admin/categories', icon: Tag },
         { label: 'Orders', href: '/admin/orders', icon: ClipboardList },
+        { label: 'Customers', href: '/admin/customers', icon: Users },
         { label: 'Banners', href: '/admin/banners', icon: ImageIcon },
       ]
     },
     {
       title: 'Configuration',
       items: [
-        { label: 'Users', href: '/admin/users', icon: Users },
+        { label: 'Staff Access', href: '/admin/users', icon: Lock },
         { label: 'Stores', href: '/admin/stores', icon: Store },
       ]
     }
   ]
 
   return (
-    <div className="min-h-screen bg-[#f5f0f7] relative overflow-hidden">
+    <div className="min-h-screen bg-[#f5f0f7] relative overflow-hidden font-outfit">
       {/* Background Accent Gradients */}
       <div className="fixed -top-24 -right-24 w-96 h-96 bg-[#743181]/5 rounded-full blur-[100px] pointer-events-none"></div>
       <div className="fixed -bottom-24 -left-24 w-96 h-96 bg-[#B86E9F]/5 rounded-full blur-[100px] pointer-events-none"></div>
@@ -83,7 +136,12 @@ export default function AdminLayout({
                 </Button>
               </Link>
               <div className="h-6 w-[1px] bg-gray-200 mx-2 hidden sm:block"></div>
-              <Button variant="ghost" size="sm" className="text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full font-bold transition-colors">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleLogout}
+                className="text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full font-bold transition-colors"
+              >
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
               </Button>
@@ -155,7 +213,7 @@ export default function AdminLayout({
 
           {/* Main Content */}
           <main className="lg:col-span-10">
-            <div className="bg-white/30 backdrop-blur-md rounded-2xl border border-white/90 p-3 min-h-[90vh] shadow-[0_30px_60px_rgba(0,0,0,0.02)] ring-1 ring-black/[0.02]">
+            <div className="bg-white/30 backdrop-blur-md rounded-2xl border border-white/90 p-5 min-h-[90vh] shadow-[0_30px_60px_rgba(0,0,0,0.02)] ring-1 ring-black/[0.02]">
                  {children}
             </div>
           </main>

@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     let userId = searchParams.get("userId");
     let emailInput = searchParams.get("email");
     const status = searchParams.get("status");
+    const storeId = searchParams.get("storeId");
     const page = Number.parseInt(searchParams.get("page") || "1");
     const limitInput = searchParams.get("limit");
     const limit = limitInput ? Number.parseInt(limitInput) : null;
@@ -49,6 +50,10 @@ export async function GET(request: NextRequest) {
       where.status = status;
     }
 
+    if (storeId && storeId !== "all") {
+      where.storeId = storeId;
+    }
+
     const [orders, total] = await Promise.all([
       db.order.findMany({
         where,
@@ -61,6 +66,7 @@ export async function GET(request: NextRequest) {
             },
           },
           user: true,
+          store: true,
           statusHistory: {
             orderBy: { createdAt: "asc" },
           },
@@ -101,7 +107,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     console.log("CREATE ORDER BODY:", JSON.stringify(body, null, 2));
-    const { userId, items, phone, address, name, email, notes } = body;
+    const { userId, items, phone, address, name, email, notes, storeId } = body;
 
     // items, phone and address are always required
     if (!items || items.length === 0)
@@ -153,6 +159,7 @@ export async function POST(request: NextRequest) {
         name,
         address,
         notes,
+        ...(storeId ? { store: { connect: { id: storeId } } } : {}),
         ...(validatedUserId
           ? { user: { connect: { id: validatedUserId } } }
           : {}),

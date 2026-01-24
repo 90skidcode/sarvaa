@@ -5,28 +5,29 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from '@/components/ui/select'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from '@/components/ui/table'
 import {
-  ArrowLeft,
-  CheckCircle2,
-  ClipboardList,
-  Clock,
-  Eye,
-  Package,
-  Search,
+    ArrowLeft,
+    Check,
+    CheckCircle2,
+    ClipboardList,
+    Clock,
+    Eye,
+    Package,
+    Search,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
@@ -62,6 +63,16 @@ interface Order {
       image: string
     }
   }[]
+  store?: {
+    id: string
+    name: string
+  } | null
+}
+
+interface Store {
+  id: string
+  name: string
+  isActive: boolean
 }
 
 export default function AdminOrdersPage() {
@@ -69,18 +80,37 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [storeFilter, setStoreFilter] = useState('all')
+  const [stores, setStores] = useState<Store[]>([])
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchOrders()
-  }, [statusFilter])
+  }, [statusFilter, storeFilter])
+
+  useEffect(() => {
+    fetchStores()
+  }, [])
+
+  const fetchStores = async () => {
+    try {
+      const response = await fetch('/api/stores?activeOnly=true')
+      const data = await response.json()
+      setStores(Array.isArray(data.stores) ? data.stores : [])
+    } catch (error) {
+      console.error('Error fetching stores:', error)
+    }
+  }
 
   const fetchOrders = async () => {
     setLoading(true)
     try {
-      let url = '/api/orders'
+      let url = '/api/orders?limit=100'
       if (statusFilter !== 'all') {
-        url += `?status=${statusFilter}`
+        url += `&status=${statusFilter}`
+      }
+      if (storeFilter !== 'all') {
+        url += `&storeId=${storeFilter}`
       }
 
       const response = await fetch(url)
@@ -177,7 +207,25 @@ export default function AdminOrdersPage() {
                 />
               </div>
 
-              <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
+              <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                <Select
+                  value={storeFilter}
+                  onValueChange={setStoreFilter}
+                >
+                  <SelectTrigger className="w-full md:w-[180px] h-10 rounded-xl bg-white border-gray-200">
+                    <SelectValue placeholder="All Branches" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Branches</SelectItem>
+                    {stores.map((store) => (
+                      <SelectItem key={store.id} value={store.id}>
+                        {store.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
                 {[
                   { id: 'all', label: 'All' },
                   { id: 'pending', label: 'Pending' },
@@ -199,6 +247,7 @@ export default function AdminOrdersPage() {
                   </Button>
                 ))}
               </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -216,46 +265,131 @@ export default function AdminOrdersPage() {
         }
 
         if (selectedOrderId && selectedOrder) {
-          // Detailed "Inner" View
+          // Redesigned Detailed View
           return (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 font-outfit">
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={() => setSelectedOrderId(null)}
-                className="text-gray-500 hover:text-[#743181] font-bold -ml-2"
+                className="text-gray-400 hover:text-[#743181] font-bold -ml-2 transition-all hover:translate-x-[-4px]"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 BACK TO LISTING
               </Button>
               
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="lg:col-span-2 space-y-4">
-                  {/* Status Timeline Card */}
-                  <Card className="border-none shadow-[0_10px_40px_rgba(0,0,0,0.03)] rounded-2xl overflow-hidden bg-gradient-to-br from-white to-gray-50/50">
-                    <CardContent className="p-6">
-                      <div className="relative pt-6 pb-10">
-                        {/* Connecting LineBackground */}
-                        <div className="absolute top-[4.5rem] left-0 w-full h-[2px] bg-gray-100 shadow-inner"></div>
-                        
-                        {/* Active Progress Line */}
-                        <div 
-                          className="absolute top-[4.5rem] left-0 h-[2px] bg-[#B86E9F] transition-all duration-1000 ease-in-out shadow-[0_0_10px_rgba(184,110,159,0.5)]"
-                          style={{ 
-                            width: (() => {
-                              const percentages: Record<string, string> = {
-                                pending: '0%',
-                                confirmed: '25%',
-                                preparing: '50%',
-                                ready: '75%',
-                                delivered: '100%'
-                              }
-                              return percentages[selectedOrder.status] || '0%'
-                            })()
-                          }}
-                        ></div>
+              <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
+                {/* LEFT PANEL: The "Ticket" (70%) */}
+                <Card className="lg:col-span-7 border-none shadow-[0_10px_40px_rgba(0,0,0,0.04)] rounded-[2rem] overflow-hidden bg-white">
+                  <CardContent className="p-10 flex flex-col h-full min-h-[600px]">
+                    
+                    {/* Header Group */}
+                    <div className="mb-10">
+                      <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+                        <h1 className="text-4xl font-black text-gray-900 tracking-tight">
+                          {selectedOrder.user?.name || selectedOrder.name || 'Guest User'}
+                        </h1>
+                        {selectedOrder.store && (
+                          <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-purple-50 text-[#743181] text-[11px] font-black uppercase tracking-widest border border-purple-100/50 shadow-sm">
+                            {selectedOrder.store.name}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="grid md:grid-cols-2 gap-8 text-sm">
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Delivery / Pickup Address</p>
+                          <p className="font-bold text-gray-700 leading-relaxed max-w-sm">
+                            {selectedOrder.address}
+                          </p>
+                        </div>
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Contact Channels</p>
+                            <div className="flex flex-col gap-1">
+                              <p className="font-bold text-gray-800">
+                                <span className="text-gray-400 font-medium mr-2">Email:</span>
+                                {selectedOrder.user?.email || selectedOrder.email || 'No email provided'}
+                              </p>
+                              <p className="font-bold text-[#743181]">
+                                <span className="text-gray-400 font-medium mr-2">Phone:</span>
+                                {selectedOrder.phone}
+                              </p>
+                            </div>
+                          </div>
+                          {selectedOrder.notes && (
+                            <div>
+                              <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Order Notes</p>
+                              <p className="text-gray-600 font-medium italic text-xs">"{selectedOrder.notes}"</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
 
-                        <div className="flex justify-between relative z-10">
+                    {/* Item List */}
+                    <div className="flex-grow border-y border-gray-100 py-8 my-4">
+                      <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6">Package Contents</h4>
+                      <div className="space-y-4">
+                        {selectedOrder.items.map((item) => (
+                          <div key={item.id} className="flex items-center gap-6 group transition-all">
+                            <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex-shrink-0">
+                              <img
+                                src={item.product.image}
+                                alt={item.product.name}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-black text-gray-900 text-base">{item.product.name}</h4>
+                              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">
+                                Qty: <span className="text-[#B86E9F]">{item.quantity}</span> × ₹{item.price.toFixed(0)}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-black text-gray-900 text-lg">₹{(item.quantity * item.price).toFixed(0)}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Total Section */}
+                    <div className="mt-auto pt-6 flex justify-between items-end">
+                      <div>
+                        <p className="text-[11px] font-black text-gray-400 uppercase tracking-[0.3em] mb-1">Total Revenue</p>
+                        <div className="flex items-baseline gap-2">
+                           <span className="text-5xl font-black text-[#743181] tracking-tighter">₹{selectedOrder.total.toFixed(0)}</span>
+                           <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Gst Inclusive</span>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-50 px-6 py-4 rounded-3xl border border-dashed border-gray-200">
+                         <div className="flex items-center gap-3">
+                            <ClipboardList className="h-5 w-5 text-gray-400" />
+                            <div>
+                               <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none">Order Number</p>
+                               <p className="font-black text-gray-700 text-lg leading-none mt-1">{selectedOrder.orderNumber}</p>
+                            </div>
+                         </div>
+                      </div>
+                    </div>
+
+                  </CardContent>
+                </Card>
+
+                {/* RIGHT PANEL: Sidebar (30%) */}
+                <div className="lg:col-span-3 space-y-6">
+                  {/* Status Timeline Card */}
+                  <Card className="border-none shadow-[0_10px_40px_rgba(0,0,0,0.04)] rounded-[2rem] overflow-hidden bg-white h-full flex flex-col">
+                    <CardContent className="p-8 flex flex-col h-full">
+                      <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] mb-10">Fulfillment Status</h4>
+                      
+                      <div className="flex-grow">
+                        <div className="relative space-y-8">
+                          {/* Vertical Line */}
+                          <div className="absolute left-[11px] top-2 bottom-6 w-[2px] bg-gray-100"></div>
+
                           {(() => {
                             const steps = [
                               { id: 'pending', label: 'Ordered', icon: Clock },
@@ -275,29 +409,30 @@ export default function AdminOrdersPage() {
                                 : selectedOrder.statusHistory?.find(h => h.status === step.id)?.createdAt
 
                               return (
-                                <div key={step.id} className="flex flex-col items-center flex-1">
+                                <div key={step.id} className={`relative pl-10 group`}>
+                                  {/* Step Dot */}
                                   <div className={`
-                                    w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-500
-                                    ${isCompleted ? 'bg-[#743181] border-[#743181] text-white shadow-lg' : 'bg-white border-gray-200 text-gray-300'}
-                                    ${isCurrent ? 'ring-4 ring-purple-100 scale-125 z-20' : ''}
+                                    absolute left-0 top-0 w-6 h-6 rounded-full border-2 bg-white z-10 
+                                    flex items-center justify-center transition-all duration-500
+                                    ${isCompleted ? 'border-[#743181] bg-[#743181] text-white shadow-lg' : 'border-gray-200'}
+                                    ${isCurrent ? 'ring-4 ring-purple-100 scale-110' : ''}
                                   `}>
-                                    <step.icon className={`h-5 w-5 ${isCurrent ? 'animate-pulse' : ''}`} />
+                                    {isCompleted && <Check className="w-3 h-3 text-white" strokeWidth={4} />}
                                   </div>
-                                  <div className="mt-4 flex flex-col items-center">
-                                    <span className={`
-                                      text-[10px] font-black uppercase tracking-widest transition-colors duration-500
+
+                                  <div className="flex flex-col">
+                                    <h4 className={`
+                                      text-sm font-black uppercase tracking-wider transition-colors duration-500
                                       ${isCompleted ? 'text-[#743181]' : 'text-gray-400'}
-                                      ${isCurrent ? 'text-gray-900 border-b-2 border-[#B86E9F] pb-1' : ''}
+                                      ${isCurrent ? 'text-gray-900 underline decoration-[#B86E9F] decoration-2 underline-offset-4' : ''}
                                     `}>
                                       {step.label}
-                                    </span>
-                                    {logTime && (
-                                      <span className="text-[9px] text-gray-500 font-bold mt-2 text-center leading-tight">
-                                        {new Date(logTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                                        <br />
-                                        {new Date(logTime).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-                                      </span>
-                                    )}
+                                    </h4>
+                                    <p className="text-[10px] font-bold text-gray-400 mt-1">
+                                      {logTime 
+                                        ? `${new Date(logTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}, ${new Date(logTime).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`
+                                        : (idx === 0 ? '-' : 'Pending')}
+                                    </p>
                                   </div>
                                 </div>
                               )
@@ -305,112 +440,52 @@ export default function AdminOrdersPage() {
                           })()}
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
 
-                  {/* Order Contents */}
-                  <Card className="border-none shadow-sm rounded-2xl">
-                    <CardContent className="p-4">
-                       <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Package Contents</h4>
+                      {/* Actions Group */}
+                      <div className="mt-12 space-y-3">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] mb-4">Operations</p>
+                        
                         <div className="space-y-2">
-                          {selectedOrder.items.map((item) => (
-                            <div key={item.id} className="flex items-center gap-4 p-2 bg-gray-50/50 rounded-xl border border-gray-100/50 transition-all hover:shadow-md">
-                              <div className="w-12 h-12 rounded-lg overflow-hidden shadow-sm border border-white">
-                                <img
-                                  src={item.product.image}
-                                  alt={item.product.name}
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                              <div className="flex-1">
-                                <p className="font-bold text-gray-900 text-sm">{item.product.name}</p>
-                                <p className="text-[10px] text-gray-500 font-medium tracking-tight">Qty: {item.quantity} × ₹{item.price.toFixed(0)}</p>
-                              </div>
-                              <div className="text-right">
-                                <p className="font-black text-[#743181] text-xs">₹{(item.quantity * item.price).toFixed(0)}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                          <Button
+                            className={`w-full py-6 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-lg transition-all
+                              ${selectedOrder.status === 'pending' || selectedOrder.status === 'cancelled'
+                                ? 'bg-gradient-to-r from-[#743181] to-[#B86E9F] hover:opacity-90' 
+                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'}
+                            `}
+                            onClick={() => updateOrderStatus(selectedOrder.id, 'confirmed')}
+                            disabled={selectedOrder.status !== 'pending'}
+                          >
+                            {selectedOrder.status === 'pending' ? 'Confirm Order' : 'Confirmed'}
+                          </Button>
+                          
+                          <div className="grid grid-cols-2 gap-2">
+                            <Button
+                              variant="outline"
+                              className="py-6 rounded-2xl font-black text-[10px] uppercase tracking-widest border-2 hover:bg-purple-50 transition-all"
+                              onClick={() => updateOrderStatus(selectedOrder.id, 'ready')}
+                              disabled={['ready', 'delivered', 'cancelled', 'pending'].includes(selectedOrder.status)}
+                            >
+                              Mark Ready
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="py-6 rounded-2xl font-black text-[10px] uppercase tracking-widest border-2 hover:bg-green-50 hover:text-green-600 transition-all"
+                              onClick={() => updateOrderStatus(selectedOrder.id, 'delivered')}
+                              disabled={selectedOrder.status !== 'ready'}
+                            >
+                              Deliver
+                            </Button>
+                          </div>
 
-                <div className="space-y-4">
-                  {/* Actions Panel */}
-                  <Card className="border-none shadow-lg bg-gradient-to-br from-[#743181] to-[#B86E9F] rounded-2xl text-white overflow-hidden">
-                    <CardContent className="p-5">
-                      <h4 className="text-[10px] font-black uppercase tracking-[0.25em] mb-4 opacity-70">Update Fulfillment</h4>
-                      
-                      <div className="relative mb-4">
-                        <Select
-                          value={selectedOrder.status}
-                          onValueChange={(value) => updateOrderStatus(selectedOrder.id, value)}
-                        >
-                          <SelectTrigger className="bg-white/10 border-white/20 text-white rounded-lg h-9 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="confirmed">Confirmed</SelectItem>
-                            <SelectItem value="preparing">Preparing</SelectItem>
-                            <SelectItem value="ready">Ready</SelectItem>
-                            <SelectItem value="delivered">Delivered</SelectItem>
-                            <SelectItem value="cancelled">Cancelled</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-full bg-white/20 hover:bg-white text-white hover:text-[#743181] font-black text-[9px] uppercase rounded-lg h-8 tracking-widest border border-white/10"
-                          onClick={() => updateOrderStatus(selectedOrder.id, 'confirmed')}
-                          disabled={selectedOrder.status === 'cancelled'}
-                        >
-                          Confirm
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-full bg-white/20 hover:bg-white text-white hover:text-[#743181] font-black text-[9px] uppercase rounded-lg h-8 tracking-widest border border-white/10"
-                          onClick={() => updateOrderStatus(selectedOrder.id, 'ready')}
-                          disabled={selectedOrder.status === 'cancelled' || selectedOrder.status === 'delivered' || selectedOrder.status === 'ready'}
-                        >
-                          Ready
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-full bg-[#662525] hover:bg-green-500 text-white font-black text-[9px] uppercase rounded-lg h-8 tracking-widest border border-white/10 shadow-lg"
-                          onClick={() => updateOrderStatus(selectedOrder.id, 'delivered')}
-                          disabled={selectedOrder.status === 'cancelled' || selectedOrder.status === 'delivered'}
-                        >
-                          Deliver
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Customer Info */}
-                  <Card className="border-none shadow-sm rounded-2xl">
-                    <CardContent className="p-5">
-                      <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Customer Details</h4>
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Contact</p>
-                          <p className="font-bold text-gray-900 text-sm">{selectedOrder.user?.name || selectedOrder.name || 'Guest'}</p>
-                          <p className="text-[10px] text-gray-500 font-medium truncate">{selectedOrder.user?.email || selectedOrder.email || 'N/A'}</p>
-                          <p className="font-bold text-[#743181] text-xs">{selectedOrder.phone}</p>
-                        </div>
-                        <div>
-                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Address</p>
-                          <p className="text-[11px] font-medium text-gray-600 leading-tight">{selectedOrder.address}</p>
-                        </div>
-                        <div className="pt-2 border-t border-gray-50 flex justify-between items-center">
-                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Revenue</span>
-                            <span className="text-lg font-black text-[#743181]">₹{selectedOrder.total.toFixed(0)}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full text-red-400 hover:text-red-500 hover:bg-red-50 font-bold text-[10px] uppercase tracking-widest mt-4"
+                            onClick={() => updateOrderStatus(selectedOrder.id, 'cancelled')}
+                            disabled={['delivered', 'cancelled'].includes(selectedOrder.status)}
+                          >
+                            Cancel Fulfillment
+                          </Button>
                         </div>
                       </div>
                     </CardContent>
@@ -444,6 +519,7 @@ export default function AdminOrdersPage() {
                 <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-none h-12">
                   <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-[#743181]">ORDER ID</TableHead>
                   <TableHead className="text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">STATUS</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-gray-400">BRANCH</TableHead>
                   <TableHead className="text-[10px] font-black uppercase tracking-widest text-gray-400">CUSTOMER</TableHead>
                   <TableHead className="text-[10px] font-black uppercase tracking-widest text-gray-400">DATE</TableHead>
                   <TableHead className="text-[10px] font-black uppercase tracking-widest text-gray-400">TOTAL</TableHead>
@@ -464,6 +540,11 @@ export default function AdminOrdersPage() {
                       <Badge className={`${getStatusColor(order.status)} rounded-full px-2 py-0.5 font-black text-[9px] uppercase shadow-sm border-none`}>
                         {order.status}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-bold text-gray-700 text-[11px] uppercase tracking-tight">
+                        {order.store?.name || 'N/A'}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col leading-tight">
