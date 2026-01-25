@@ -71,8 +71,59 @@ export default function CheckoutPage() {
     }
   }
 
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('')
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null)
+  const [discountAmount, setDiscountAmount] = useState(0)
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
+
   const cartTotal = getSubtotal()
-  const grandTotal = cartTotal // No shipping for takeaway
+  const grandTotal = cartTotal - discountAmount
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return
+    setIsApplyingCoupon(true)
+    
+    try {
+      const currentUser = getCurrentUser()
+      const response = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: couponCode,
+          userId: currentUser?.id || null,
+          items: items.map(item => ({
+            productId: item.productId,
+            price: item.price,
+            quantity: item.quantity
+          }))
+        })
+      })
+
+      const data = await response.json()
+      if (response.ok) {
+        setAppliedCoupon(data.coupon)
+        setDiscountAmount(data.discountAmount)
+        toast.success(`Coupon "${data.coupon.code}" applied!`, {
+          description: `You saved ₹${data.discountAmount.toFixed(2)}`
+        })
+      } else {
+        toast.error(data.error || 'Invalid coupon code')
+      }
+    } catch (error) {
+      console.error('Error applying coupon:', error)
+      toast.error('Failed to apply coupon')
+    } finally {
+      setIsApplyingCoupon(false)
+    }
+  }
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null)
+    setDiscountAmount(0)
+    setCouponCode('')
+    toast.info('Coupon removed')
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData(prev => ({
@@ -99,99 +150,65 @@ export default function CheckoutPage() {
         return
       }
 
-      // Simulate order creation
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Simulate order creation delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 1000))
 
-      // Generate order number in format: YYYYMMDDXXXX
-      const now = new Date()
-      const year = now.getFullYear()
-      const month = String(now.getMonth() + 1).padStart(2, '0')
-      const day = String(now.getDate()).padStart(2, '0')
-      const sequence = String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0')
-      const orderNumber = `${year}${month}${day}${sequence}`
-
-      // Create order object
-      const order = {
-        id: orderNumber,
-        orderNumber: orderNumber,
-        items: items.map(item => ({
-          productId: item.productId,
-          name: item.name,
-          quantity: item.quantity,
-          variantType: item.variantType,
-          variantValue: item.variantValue,
-          price: item.price
-        })),
-        customer: formData,
-        orderType: 'takeaway',
-        storeId: formData.selectedStore,
-        total: grandTotal,
-        paymentMethod: 'cod',
-        status: 'pending',
-        createdAt: new Date().toISOString()
-      }
-
-      // Save order to database via API
-      try {
-        const currentUser = getCurrentUser()
-        const selectedStoreData = stores.find(s => s.id === formData.selectedStore)
-        
-        const response = await fetch('/api/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: currentUser?.id || null, // null for guest
-            phone: formData.phone,
-            email: formData.email,
-            name: formData.name,
-            address: selectedStoreData ? `${selectedStoreData.name}, ${selectedStoreData.address}` : 'Store Pickup',
-            notes: formData.selectedStore ? `Store Pickup ID: ${formData.selectedStore}` : '',
-            storeId: formData.selectedStore || null,
-            items: order.items.map(item => ({
-              productId: item.productId,
-              quantity: item.quantity,
-              price: item.price
-            }))
-          })
+      const currentUser = getCurrentUser()
+      const selectedStoreData = stores.find(s => s.id === formData.selectedStore)
+      
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser?.id || null, // null for guest
+          phone: formData.phone,
+          email: formData.email,
+          name: formData.name,
+          address: selectedStoreData ? `${selectedStoreData.name}, ${selectedStoreData.address}` : 'Store Pickup',
+          notes: formData.selectedStore ? `Store Pickup ID: ${formData.selectedStore}` : '',
+          storeId: formData.selectedStore || null,
+          couponId: appliedCoupon?.id || null,
+          items: items.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price
+          }))
         })
-        
-        if (response.ok) {
-          const data = await response.json()
-          // Update order with database ID
-          order.id = data.order?.id || order.id
-          order.orderNumber = data.order?.orderNumber || order.orderNumber
-          order.status = data.order?.status || order.status
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        const order = data.order
 
-          // Also store order in localStorage for user's order history fallback
-          const localOrders = JSON.parse(localStorage.getItem('orders') || '[]')
-          localOrders.push(order)
-          localStorage.setItem('orders', JSON.stringify(localOrders))
+        // Also store order in localStorage for user's order history fallback
+        const localOrders = JSON.parse(localStorage.getItem('orders') || '[]')
+        localOrders.push({
+          id: order.id,
+          orderNumber: order.orderNumber,
+          items: items,
+          total: order.total,
+          status: order.status,
+          createdAt: order.createdAt
+        })
+        localStorage.setItem('orders', JSON.stringify(localOrders))
 
-          // Clear cart
-          clearCart()
+        // Clear cart
+        clearCart()
 
-          // Show success
-          const storeName = stores.find(s => s.id === formData.selectedStore)?.name
-          toast.success(`Order ${order.orderNumber} confirmed!`, {
-            description: `Pick up from ${storeName}. Total: ₹${grandTotal}`
-          })
+        // Show success
+        const storeName = stores.find(s => s.id === formData.selectedStore)?.name
+        toast.success(`Order ${order.orderNumber} confirmed!`, {
+          description: `Pick up from ${storeName}. Total: ₹${order.total}`
+        })
 
-          // Redirect to success page
-          setTimeout(() => {
-            router.push('/?order=success')
-          }, 1500)
-        } else {
-          const errorData = await response.json()
-          console.error('API order save failed:', errorData)
-          toast.error(`Order failed: ${errorData.error || 'Please check your details'}`)
-          setLoading(false)
-          return // STOP HERE
-        }
-      } catch (apiError) {
-        console.error('API order save failed:', apiError)
-        toast.error('Connection error. Could not save order.')
-        setLoading(false)
-        return // STOP HERE
+        // Redirect to success page
+        setTimeout(() => {
+          router.push('/?order=success')
+        }, 1500)
+      } else {
+        const errorData = await response.json()
+        console.error('API order save failed:', errorData)
+        toast.error(`Order failed: ${errorData.error || 'Please check your details'}`)
       }
     } catch (error) {
       console.error('Checkout error:', error)
@@ -372,11 +389,61 @@ export default function CheckoutPage() {
                   ))}
                 </div>
 
+                {/* Coupon Section */}
+                <div className="pt-6 border-t border-dashed border-gray-200 space-y-4">
+                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Promotional Code</p>
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between bg-emerald-50 p-3 rounded-2xl border border-emerald-100 group">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-emerald-500 text-white rounded-xl shadow-sm">
+                            <CheckCircle2 className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-black text-emerald-700">{appliedCoupon.code}</p>
+                          <p className="text-[10px] text-emerald-600 font-bold">₹{discountAmount.toFixed(2)} saved</p>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={handleRemoveCoupon}
+                        className="text-emerald-700 hover:text-red-500 hover:bg-transparent -mr-2"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                        <Input
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                          placeholder="Enter code"
+                          className="rounded-xl border-gray-100 bg-gray-50/50"
+                        />
+                        <Button 
+                          variant="outline"
+                          onClick={handleApplyCoupon}
+                          disabled={isApplyingCoupon || !couponCode}
+                          className="rounded-xl border-purple-100 text-[#743181] hover:bg-purple-50 font-bold transition-all px-6"
+                        >
+                          {isApplyingCoupon ? '...' : 'Apply'}
+                        </Button>
+                    </div>
+                  )}
+                </div>
+
                 <div className="pt-6 border-t border-dashed border-gray-200 space-y-3">
                   <div className="flex justify-between text-sm font-medium">
                     <span className="text-gray-500">Items Subtotal</span>
                     <span className="text-gray-900">₹{cartTotal.toFixed(2)}</span>
                   </div>
+                  
+                  {appliedCoupon && (
+                    <div className="flex justify-between text-sm font-medium">
+                      <span className="text-emerald-600 font-bold">Coupon Discount</span>
+                      <span className="text-emerald-600 font-black">-₹{discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
                   
                   <div className="flex justify-between text-sm font-medium">
                     <span className="text-gray-500 flex items-center gap-1">
