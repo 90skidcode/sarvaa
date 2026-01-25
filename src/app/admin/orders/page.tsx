@@ -19,15 +19,17 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
+import { generateInvoice } from '@/lib/invoice'
 import {
     ArrowLeft,
     Check,
     CheckCircle2,
     ClipboardList,
     Clock,
+    Download,
     Eye,
     Package,
-    Search,
+    Search
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
@@ -478,6 +480,14 @@ export default function AdminOrdersPage() {
                           </div>
 
                           <Button
+                            variant="outline"
+                            className="w-full py-6 rounded-2xl font-black text-[10px] uppercase tracking-widest border-2 hover:bg-purple-50 transition-all mb-2"
+                            onClick={() => generateInvoice(selectedOrder)}
+                          >
+                            <Download className="h-4 w-4 mr-2" /> Download Invoice
+                          </Button>
+
+                          <Button
                             variant="ghost"
                             size="sm"
                             className="w-full text-red-400 hover:text-red-500 hover:bg-red-50 font-bold text-[10px] uppercase tracking-widest mt-4"
@@ -566,17 +576,30 @@ export default function AdminOrdersPage() {
                       ₹{order.total.toFixed(0)}
                     </TableCell>
                     <TableCell className="text-right pr-6">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-[#743181] hover:bg-white rounded-full h-8 w-8 p-0 border border-transparent hover:border-purple-100"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedOrderId(order.id);
-                        }}
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                      </Button>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-[#743181] hover:bg-white rounded-full h-8 w-8 p-0 border border-transparent hover:border-purple-100"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            generateInvoice(order);
+                          }}
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-[#743181] hover:bg-white rounded-full h-8 w-8 p-0 border border-transparent hover:border-purple-100"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedOrderId(order.id);
+                          }}
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

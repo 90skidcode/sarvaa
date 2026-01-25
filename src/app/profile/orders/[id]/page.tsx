@@ -3,7 +3,8 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Calendar, CheckCircle2, Clock, CreditCard, Package, Phone, Store, User } from 'lucide-react'
+import { generateInvoice } from '@/lib/invoice'
+import { ArrowLeft, Calendar, CheckCircle2, Clock, CreditCard, Download, Package, Phone, Store, User } from 'lucide-react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -130,6 +131,14 @@ export default function OrderDetailsPage() {
                 <Badge className={`${statusColors[order.status]} border`}>
                   {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                 </Badge>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="ml-auto text-[#743181] border-[#743181] hover:bg-purple-50"
+                  onClick={() => generateInvoice(order)}
+                >
+                  <Download className="h-4 w-4 mr-2" /> Download Invoice
+                </Button>
               </div>
               <p className="text-gray-500 text-sm mt-1">Order placed on {formatDate(order.createdAt)}</p>
             </div>

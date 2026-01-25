@@ -4,7 +4,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { getCurrentUser } from '@/lib/api-client'
-import { ArrowLeft, ChevronRight, ClipboardList, Package, Store } from 'lucide-react'
+import { generateInvoice } from '@/lib/invoice'
+import { ArrowLeft, ChevronRight, ClipboardList, Download, Package, Store } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -184,11 +185,21 @@ export default function OrdersPage() {
                       <p className="text-sm text-gray-500">
                         Payment: <span className="font-medium text-gray-700 uppercase">{order.paymentMethod}</span>
                       </p>
-                      <Link href={`/profile/orders/${order.orderNumber || order.id}`}>
-                        <Button variant="ghost" size="sm" className="text-[#743181] hover:bg-purple-50">
-                          View Details <ChevronRight className="h-4 w-4 ml-1" />
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-[#743181] border-[#743181] hover:bg-purple-50"
+                          onClick={() => generateInvoice(order)}
+                        >
+                          <Download className="h-4 w-4 mr-1" /> Invoice
                         </Button>
-                      </Link>
+                        <Link href={`/profile/orders/${order.orderNumber || order.id}`}>
+                          <Button variant="ghost" size="sm" className="text-[#743181] hover:bg-purple-50">
+                            View Details <ChevronRight className="h-4 w-4 ml-1" />
+                          </Button>
+                        </Link>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
