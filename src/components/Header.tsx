@@ -79,6 +79,9 @@ export function Header() {
             <Link href="/products" className="text-gray-700 hover:text-[#743181] font-medium transition-colors relative group">
               Shop Sweets<span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#743181] transition-all group-hover:w-full"></span>
             </Link>
+            <Link href="/custom-cakes" className="text-gray-700 hover:text-[#743181] font-medium transition-colors relative group text-sm uppercase tracking-widest font-black">
+              Custom Cakes<span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#743181] transition-all group-hover:w-full"></span>
+            </Link>
             <Link href="/contact" className="text-gray-700 hover:text-[#743181] font-medium transition-colors relative group">
               Contact<span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#743181] transition-all group-hover:w-full"></span>
             </Link>

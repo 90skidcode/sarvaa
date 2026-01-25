@@ -5,8 +5,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { Cake, Send, Sparkles, Upload } from 'lucide-react'
-import React, { useState } from 'react'
+import { Cake, MapPin, Send, Sparkles, Upload } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 export function CustomCakeSection() {
@@ -15,10 +15,28 @@ export function CustomCakeSection() {
     flavor: '',
     weight: '',
     message: '',
+    storeId: '',
+    customerName: '',
+    phone: '',
     designFile: null as File | null,
   })
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [stores, setStores] = useState<{ id: string, name: string }[]>([])
+
+  useEffect(() => {
+    fetchStores()
+  }, [])
+
+  const fetchStores = async () => {
+    try {
+      const response = await fetch('/api/stores?activeOnly=true')
+      const data = await response.json()
+      setStores(Array.isArray(data.stores) ? data.stores : [])
+    } catch (error) {
+      console.error('Error fetching stores:', error)
+    }
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -36,27 +54,54 @@ export function CustomCakeSection() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if ( !formData.flavor || !formData.weight) {
-      toast.error('Please fill in all required fields')
+    if (!formData.flavor || !formData.weight || !formData.storeId || !formData.designFile || !formData.customerName || !formData.phone) {
+      toast.error('Please fill in all required fields including design photo, name and phone')
       return
     }
 
     setLoading(true)
-    // Simulate API call
-    setTimeout(() => {
+    
+    try {
+      const data = new FormData()
+      data.append('flavor', formData.flavor)
+      data.append('weight', formData.weight)
+      data.append('description', `Flavor: ${formData.flavor}, Weight: ${formData.weight}kg. Message: ${formData.message}`)
+      data.append('storeId', formData.storeId)
+      data.append('customerName', formData.customerName)
+      data.append('phone', formData.phone)
+      if (formData.designFile) {
+        data.append('cakeImage', formData.designFile)
+      }
+
+      const response = await fetch('/api/custom-cakes', {
+        method: 'POST',
+        body: data,
+      })
+
+      if (response.ok) {
+        toast.success('Quote Request Sent!', {
+          description: 'Our master chef will review your design and contact you within 2 hours.',
+        })
+        setFormData({
+          flavor: '',
+          weight: '',
+          message: '',
+          storeId: '',
+          customerName: '',
+          phone: '',
+          designFile: null,
+        })
+        setPreviewUrl(null)
+      } else {
+        const err = await response.json()
+        toast.error(err.error || 'Failed to send request')
+      }
+    } catch (error) {
+      console.error('Submission error:', error)
+      toast.error('Something went wrong')
+    } finally {
       setLoading(false)
-      toast.success('Quote Request Sent!', {
-        description: 'Our master chef will review your design and contact you within 2 hours.',
-      })
-      // Reset form
-      setFormData({
-        flavor: '',
-        weight: '',
-        message: '',
-        designFile: null,
-      })
-      setPreviewUrl(null)
-    }, 2000)
+    }
   }
 
   return (
@@ -64,7 +109,7 @@ export function CustomCakeSection() {
       {/* Background with Image */}
       <div className="absolute inset-0 z-0">
         <img
-          src="/images/custom_cake_background.png" // I need to make sure this path works or use the generated path
+          src="/images/custom_cake_background.png" 
           alt="Custom Cake Background"
           className="w-full h-full object-cover opacity-10"
         />
@@ -159,9 +204,51 @@ export function CustomCakeSection() {
                       </div>
                     </div>
 
-                    <div className="grid gap-4">
-                     
+                    <div className="space-y-4">
+                      <Label htmlFor="branch" className="font-bold text-gray-700 flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-[#743181]" />
+                        Select Pickup Branch
+                      </Label>
+                      <Select value={formData.storeId} onValueChange={(val) => setFormData({...formData, storeId: val})} >
+                        <SelectTrigger className="rounded-xl border-gray-200 h-12 focus:ring-[#743181]/20 w-full transition-all hover:border-[#743181]">
+                          <SelectValue placeholder="Chose Store Branch" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl border-gray-100 shadow-xl">
+                          {stores.map(store => (
+                            <SelectItem key={store.id} value={store.id} className="font-medium focus:bg-purple-50 focus:text-[#743181]">
+                              {store.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="font-bold text-gray-700">Your Name</Label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="Full Name"
+                          className="w-full h-12 px-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#743181]/20 focus:border-[#743181] transition-all font-medium"
+                          value={formData.customerName}
+                          onChange={(e) => setFormData({...formData, customerName: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="font-bold text-gray-700">Phone Number</Label>
+                        <input
+                          type="tel"
+                          required
+                          placeholder="Your Number"
+                          className="w-full h-12 px-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#743181]/20 focus:border-[#743181] transition-all font-medium"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="flavor" className="font-bold text-gray-700">Flavors</Label>
                         <Select value={formData.flavor} onValueChange={(val) => setFormData({...formData, flavor: val})} >
@@ -177,9 +264,7 @@ export function CustomCakeSection() {
                           </SelectContent>
                         </Select>
                       </div>
-                    </div>
 
-                    <div className="grid gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="weight" className="font-bold text-gray-700">Weight (KGs)</Label>
                         <Select value={formData.weight} onValueChange={(val) => setFormData({...formData, weight: val})}>
@@ -195,7 +280,6 @@ export function CustomCakeSection() {
                           </SelectContent>
                         </Select>
                       </div>
-                      
                     </div>
 
                     <div className="space-y-2">
@@ -203,7 +287,7 @@ export function CustomCakeSection() {
                       <Textarea 
                         id="message"
                         placeholder="Write your special message here..."
-                        className="rounded-2xl border-gray-200 min-h-[100px] focus:ring-[#743181]/20"
+                        className="rounded-2xl border-gray-200 min-h-[100px] focus:ring-[#743181]/20 font-medium"
                         value={formData.message}
                         onChange={(e) => setFormData({...formData, message: e.target.value})}
                       />
@@ -226,7 +310,7 @@ export function CustomCakeSection() {
                       )}
                     </Button>
                     
-                    <p className="text-center text-xs text-gray-400 font-medium tracking-wide">
+                    <p className="text-center text-xs text-gray-400 font-medium tracking-wide uppercase">
                       * OUR CHEFS WILL CALL YOU TO FINALIZE PRICING AND PICKUP
                     </p>
                   </form>
