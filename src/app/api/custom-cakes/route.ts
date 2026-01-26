@@ -40,9 +40,9 @@ export async function POST(request: NextRequest) {
     const description = formData.get("description") as string | null;
     const storeId = formData.get("storeId") as string;
     const preferredDateStr = formData.get("preferredDate") as string | null;
-    const cakeImageFile = formData.get("cakeImage") as File | null;
+    const cakeImageFiles = formData.getAll("cakeImages") as File[];
 
-    if (!customerName || !phone || !storeId || !cakeImageFile) {
+    if (!customerName || !phone || !storeId || cakeImageFiles.length === 0) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 },
@@ -58,14 +58,17 @@ export async function POST(request: NextRequest) {
     );
     await mkdir(uploadDir, { recursive: true });
 
-    // Save image
-    const bytes = await cakeImageFile.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const filename = `cake-${Date.now()}-${cakeImageFile.name.replace(/\s/g, "-")}`;
-    const filePath = path.join(uploadDir, filename);
-    await writeFile(filePath, buffer);
+    const cakeImagePaths: string[] = [];
 
-    const cakeImagePath = `/uploads/custom-cakes/${filename}`;
+    // Save all images
+    for (const file of cakeImageFiles) {
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      const filename = `cake-${Date.now()}-${Math.random().toString(36).substring(7)}-${file.name.replace(/\s/g, "-")}`;
+      const filePath = path.join(uploadDir, filename);
+      await writeFile(filePath, buffer);
+      cakeImagePaths.push(`/uploads/custom-cakes/${filename}`);
+    }
 
     // Create order in database
     const order = await prisma.customCakeOrder.create({
@@ -75,7 +78,8 @@ export async function POST(request: NextRequest) {
         email,
         description,
         storeId,
-        cakeImage: cakeImagePath,
+        cakeImage: cakeImagePaths[0], // Primary image
+        images: JSON.stringify(cakeImagePaths), // All images
         preferredDate: preferredDateStr ? new Date(preferredDateStr) : null,
         status: "pending",
       },

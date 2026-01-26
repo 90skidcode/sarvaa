@@ -30,6 +30,7 @@ interface CustomCakeOrder {
   phone: string
   email: string | null
   cakeImage: string
+  images: string | null
   description: string | null
   status: string
   preferredDate: string | null
@@ -47,6 +48,7 @@ export default function AdminCustomCakesPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
+  const [currentGalleryImage, setCurrentGalleryImage] = useState<string | null>(null)
 
   useEffect(() => {
     fetchOrders()
@@ -108,6 +110,14 @@ export default function AdminCustomCakesPage() {
 
   const selectedOrder = orders.find(o => o.id === selectedOrderId)
 
+  useEffect(() => {
+    if (selectedOrder) {
+      setCurrentGalleryImage(selectedOrder.cakeImage)
+    } else {
+      setCurrentGalleryImage(null)
+    }
+  }, [selectedOrderId, selectedOrder])
+
   let content
   if (loading) {
     content = (
@@ -131,16 +141,39 @@ export default function AdminCustomCakesPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
           <Card className="lg:col-span-6 border-none shadow-[0_10px_40px_rgba(0,0,0,0.04)] rounded-[2rem] overflow-hidden bg-white">
-            <div className="aspect-square relative bg-gray-50 group">
-              <img 
-                src={selectedOrder.cakeImage} 
-                alt="Cake Design" 
-                className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-700" 
-              />
-              <div className="absolute top-6 right-6">
-                <Badge className={`${getStatusColor(selectedOrder.status)} text-[10px] font-black uppercase px-4 py-1.5 rounded-full border-none shadow-lg tracking-widest`}>
-                  {selectedOrder.status}
-                </Badge>
+            <div className="flex flex-col h-full">
+              <div className="aspect-square relative bg-gray-50 group flex-grow">
+                <img 
+                  src={currentGalleryImage || selectedOrder.cakeImage} 
+                  alt="Cake Design" 
+                  className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-700" 
+                />
+                <div className="absolute top-6 right-6">
+                  <Badge className={`${getStatusColor(selectedOrder.status)} text-[10px] font-black uppercase px-4 py-1.5 rounded-full border-none shadow-lg tracking-widest`}>
+                    {selectedOrder.status}
+                  </Badge>
+                </div>
+                
+                {(() => {
+                  const allImages = selectedOrder.images ? JSON.parse(selectedOrder.images) : [selectedOrder.cakeImage];
+                  if (allImages.length <= 1) return null;
+                  
+                  return (
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 p-3 bg-white/80 backdrop-blur-md rounded-2xl shadow-xl overflow-x-auto max-w-[90%]">
+                      {allImages.map((img: string, idx: number) => (
+                        <button
+                          key={idx}
+                          onClick={() => setCurrentGalleryImage(img)}
+                          className={`w-12 h-12 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${
+                            currentGalleryImage === img ? 'border-[#743181] scale-110 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'
+                          }`}
+                        >
+                          <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </Card>

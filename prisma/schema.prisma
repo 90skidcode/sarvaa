@@ -176,7 +176,8 @@ model CustomCakeOrder {
   customerName  String
   phone         String
   email         String?
-  cakeImage     String // Path to uploaded image
+  cakeImage     String // Primary/First image
+  images        String? // JSON array of additional image paths: ["url1", "url2"]
   description   String?
   status        String    @default("pending") // pending, quoted, confirmed, completed, cancelled
   preferredDate DateTime?

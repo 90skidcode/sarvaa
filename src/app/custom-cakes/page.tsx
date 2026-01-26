@@ -13,7 +13,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { Camera, CheckCircle2, Loader2, Upload } from 'lucide-react'
+import { Camera, CheckCircle2, Loader2, Upload, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -25,7 +25,7 @@ interface Store {
 export default function CustomCakesPage() {
   const [loading, setLoading] = useState(false)
   const [stores, setStores] = useState<Store[]>([])
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [submitted, setSubmitted] = useState(false)
 
   useEffect(() => {
@@ -43,14 +43,21 @@ export default function CustomCakesPage() {
   }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+    const files = Array.from(e.target.files || [])
+    if (files.length > 0) {
+      const newPreviews: string[] = []
+      files.forEach(file => {
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          setImagePreviews(prev => [...prev, reader.result as string])
+        }
+        reader.readAsDataURL(file)
+      })
     }
+  }
+
+  const removeImage = (index: number) => {
+    setImagePreviews(prev => prev.filter((_, i) => i !== index))
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -58,6 +65,15 @@ export default function CustomCakesPage() {
     setLoading(true)
 
     const formData = new FormData(e.currentTarget)
+    
+    // Remove individual cakeImage if multiple are present or ensure they are sent as cakeImages
+    formData.delete('cakeImage')
+    const fileInput = e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement
+    if (fileInput && fileInput.files) {
+      Array.from(fileInput.files).forEach(file => {
+        formData.append('cakeImages', file)
+      })
+    }
     
     try {
       const response = await fetch('/api/custom-cakes', {
@@ -121,13 +137,26 @@ export default function CustomCakesPage() {
           {/* Inspiration Area */}
           <div className="lg:col-span-5 space-y-6">
             <Card className="border-none shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2rem] overflow-hidden bg-white">
-              <div className="aspect-square relative flex items-center justify-center bg-gray-50">
-                {imagePreview ? (
-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+              <div className="p-4 bg-gray-50 min-h-[400px]">
+                {imagePreviews.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    {imagePreviews.map((preview, index) => (
+                      <div key={index} className="relative aspect-square rounded-2xl overflow-hidden shadow-md group">
+                        <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
-                  <div className="text-center p-12">
+                  <div className="flex flex-col items-center justify-center h-full py-20 text-center">
                     <Camera className="h-20 w-20 text-gray-200 mx-auto mb-6" />
-                    <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Your Design Will Appear Here</p>
+                    <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Your Designs Will Appear Here</p>
                   </div>
                 )}
               </div>
@@ -228,9 +257,9 @@ export default function CustomCakesPage() {
                   <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 rounded-[1.5rem] cursor-pointer hover:bg-purple-50 hover:border-[#743181] transition-all group">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                       <Upload className="w-8 h-8 text-gray-400 group-hover:text-[#743181] mb-2" />
-                      <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Click to upload image</p>
+                      <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Click to upload images</p>
                     </div>
-                    <input name="cakeImage" type="file" className="hidden" accept="image/*" onChange={handleImageChange} required />
+                    <input name="cakeImage" type="file" className="hidden" accept="image/*" onChange={handleImageChange} multiple required={imagePreviews.length === 0} />
                   </label>
                 </div>
 

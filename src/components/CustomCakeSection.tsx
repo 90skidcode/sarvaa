@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { Cake, MapPin, Send, Sparkles, Upload } from 'lucide-react'
+import { Cake, MapPin, Send, Sparkles, Upload, X } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -18,10 +18,10 @@ export function CustomCakeSection() {
     storeId: '',
     customerName: '',
     phone: '',
-    designFile: null as File | null,
+    designFiles: [] as File[],
   })
 
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const [stores, setStores] = useState<{ id: string, name: string }[]>([])
 
   useEffect(() => {
@@ -39,23 +39,47 @@ export function CustomCakeSection() {
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('File size too large', { description: 'Please upload an image smaller than 5MB' })
-        return
+    const files = Array.from(e.target.files || [])
+    if (files.length > 0) {
+      const validFiles: File[] = []
+      const newPreviewUrls: string[] = []
+
+      files.forEach(file => {
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error(`File ${file.name} is too large`, { description: 'Please upload images smaller than 5MB' })
+        } else {
+          validFiles.push(file)
+          newPreviewUrls.push(URL.createObjectURL(file))
+        }
+      })
+
+      if (validFiles.length > 0) {
+        setFormData(prev => ({ ...prev, designFiles: [...prev.designFiles, ...validFiles] }))
+        setPreviewUrls(prev => [...prev, ...newPreviewUrls])
+        toast.success(`${validFiles.length} design(s) added!`)
       }
-      setFormData({ ...formData, designFile: file })
-      setPreviewUrl(URL.createObjectURL(file))
-      toast.success('Design uploaded successfully!')
     }
+  }
+
+  const removeImage = (index: number) => {
+    const newFiles = [...formData.designFiles]
+    const newPreviewUrls = [...previewUrls]
+    
+    // Revoke the URL to avoid memory leaks
+    URL.revokeObjectURL(newPreviewUrls[index])
+    
+    newFiles.splice(index, 1)
+    newPreviewUrls.splice(index, 1)
+    
+    setFormData({ ...formData, designFiles: newFiles })
+    setPreviewUrls(newPreviewUrls)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.flavor || !formData.weight || !formData.storeId || !formData.designFile || !formData.customerName || !formData.phone) {
-      toast.error('Please fill in all required fields including design photo, name and phone')
+    if (!formData.flavor || !formData.weight || !formData.storeId || formData.designFiles.length === 0 || !formData.customerName || !formData.phone) {
+      toast.error('Please fill in all required fields including at least one design photo, name and phone')
       return
     }
 
@@ -69,9 +93,10 @@ export function CustomCakeSection() {
       data.append('storeId', formData.storeId)
       data.append('customerName', formData.customerName)
       data.append('phone', formData.phone)
-      if (formData.designFile) {
-        data.append('cakeImage', formData.designFile)
-      }
+      
+      formData.designFiles.forEach((file) => {
+        data.append('cakeImages', file)
+      })
 
       const response = await fetch('/api/custom-cakes', {
         method: 'POST',
@@ -89,9 +114,9 @@ export function CustomCakeSection() {
           storeId: '',
           customerName: '',
           phone: '',
-          designFile: null,
+          designFiles: [],
         })
-        setPreviewUrl(null)
+        setPreviewUrls([])
       } else {
         const err = await response.json()
         toast.error(err.error || 'Failed to send request')
@@ -170,25 +195,50 @@ export function CustomCakeSection() {
                       <Label className="text-gray-900 font-bold text-lg">Upload Your Cake Design Photo</Label>
                       <div 
                         className={`relative group cursor-pointer border-2 border-dashed rounded-3xl p-8 transition-all ${
-                          previewUrl ? 'border-[#743181] bg-purple-50/30' : 'border-gray-200 hover:border-[#743181] hover:bg-purple-50/50'
+                          previewUrls.length > 0 ? 'border-[#743181] bg-purple-50/30' : 'border-gray-200 hover:border-[#743181] hover:bg-purple-50/50'
                         }`}
-                        onClick={() => document.getElementById('cake-upload')?.click()}
+                        onClick={() => {
+                          if (previewUrls.length === 0) {
+                            document.getElementById('cake-upload')?.click()
+                          }
+                        }}
                       >
                         <input
                           id="cake-upload"
                           type="file"
                           className="hidden"
                           accept="image/*"
+                          multiple
                           onChange={handleFileChange}
                         />
-                        {previewUrl ? (
-                          <div className="relative aspect-video rounded-2xl overflow-hidden shadow-lg animate-in fade-in zoom-in duration-300">
-                            <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                              <p className="text-white font-bold flex items-center gap-2">
-                                <Upload className="h-5 w-5" /> Change Design
-                              </p>
-                            </div>
+                        {previewUrls.length > 0 ? (
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 w-full">
+                            {previewUrls.map((url, index) => (
+                              <div key={index} className="relative aspect-square rounded-2xl overflow-hidden shadow-md group/item animate-in fade-in zoom-in duration-300">
+                                <img src={url} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    removeImage(index)
+                                  }}
+                                  className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover/item:opacity-100 transition-opacity hover:bg-red-600 shadow-lg"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            ))}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                document.getElementById('cake-upload')?.click()
+                              }}
+                              className="aspect-square rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 hover:border-[#743181] hover:bg-purple-50/50 transition-all text-gray-400 hover:text-[#743181]"
+                            >
+                              <Upload className="h-6 w-6" />
+                              <span className="text-[10px] font-bold uppercase">Add More</span>
+                            </button>
                           </div>
                         ) : (
                           <div className="text-center space-y-3">
@@ -196,8 +246,8 @@ export function CustomCakeSection() {
                               <Upload className="h-8 w-8" />
                             </div>
                             <div>
-                              <p className="text-gray-900 font-bold">Drop your image here</p>
-                              <p className="text-sm text-gray-500">PNG, JPG up to 5MB</p>
+                              <p className="text-gray-900 font-bold">Drop your images here</p>
+                              <p className="text-sm text-gray-500">PNG, JPG up to 5MB (Multiple choice)</p>
                             </div>
                           </div>
                         )}
