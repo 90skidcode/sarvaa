@@ -86,7 +86,6 @@ export default function AdminLayout({
         { label: 'Products', href: '/admin/products', icon: Package },
         { label: 'Categories', href: '/admin/categories', icon: Tag },
         { label: 'Orders', href: '/admin/orders', icon: ClipboardList },
-        { label: 'Custom Cakes', href: '/admin/custom-cakes', icon: Cake },
         { label: 'Coupons', href: '/admin/coupons', icon: Tag },
         { label: 'Customers', href: '/admin/customers', icon: Users },
         { label: 'Banners', href: '/admin/banners', icon: ImageIcon },

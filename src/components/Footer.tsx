@@ -95,9 +95,11 @@ export function Footer() {
 
           <div className="border-t border-gray-200 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
             <p>&copy; {new Date().getFullYear()} Sarvaa Sweets. Dedicated to Tamil Traditions.</p>
-            <div className="flex gap-6">
-              <Link href="/privacy" className="hover:text-gray-900">Privacy Policy</Link>
-              <Link href="/terms" className="hover:text-gray-900">Terms of Service</Link>
+            <div className="flex flex-wrap justify-center md:justify-end gap-x-6 gap-y-2">
+              <Link href="/privacy" className="hover:text-gray-900 transition-colors">Privacy Policy</Link>
+              <Link href="/terms" className="hover:text-gray-900 transition-colors">Terms of Service</Link>
+              <Link href="/refund-policy" className="hover:text-gray-900 transition-colors">Refund Policy</Link>
+              <Link href="/shipping-policy" className="hover:text-gray-900 transition-colors">Shipping Policy</Link>
             </div>
           </div>
         </div>
