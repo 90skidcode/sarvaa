@@ -10,23 +10,34 @@ export async function GET(request: NextRequest) {
     const emailInput = getParam(searchParams, "email");
     const status = searchParams.get("status");
     const storeId = searchParams.get("storeId");
+    const search = searchParams.get("search");
     const page = Number.parseInt(searchParams.get("page") || "1");
     const limitInput = searchParams.get("limit");
-    const limit = limitInput ? Number.parseInt(limitInput) : null;
-    const skip = limit ? (page - 1) * limit : undefined;
+    const limit = limitInput ? Number.parseInt(limitInput) : 10; // Default limit
+    const skip = (page - 1) * limit;
 
     const where = await buildOrderWhereClause(
       userId,
       emailInput,
       status,
       storeId,
+      search,
     );
 
-    const [orders, total] = await Promise.all([
+    // Base where for status counts (authorized store but NO status filter and NO search)
+    const baseWhere = await buildOrderWhereClause(
+      userId,
+      emailInput,
+      "all",
+      storeId,
+      null,
+    );
+
+    const [orders, total, counts] = await Promise.all([
       db.order.findMany({
         where,
         skip,
-        take: limit || undefined,
+        take: limit,
         include: {
           items: { include: { product: true } },
           user: true,
@@ -36,15 +47,33 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: "desc" },
       }),
       db.order.count({ where }),
+      Promise.all([
+        db.order.count({ where: { ...baseWhere, status: "pending" } }),
+        db.order.count({ where: { ...baseWhere, status: "confirmed" } }),
+        db.order.count({ where: { ...baseWhere, status: "preparing" } }),
+        db.order.count({ where: { ...baseWhere, status: "ready" } }),
+        db.order.count({ where: { ...baseWhere, status: "delivered" } }),
+        db.order.count({ where: { ...baseWhere, status: "cancelled" } }),
+        db.order.count({ where: baseWhere }),
+      ]),
     ]);
 
     return NextResponse.json({
       orders,
       pagination: {
         page,
-        limit: limit || total,
+        limit,
         total,
-        totalPages: limit ? Math.ceil(total / limit) : 1,
+        totalPages: Math.ceil(total / limit),
+      },
+      statusCounts: {
+        pending: counts[0],
+        confirmed: counts[1],
+        preparing: counts[2],
+        ready: counts[3],
+        delivered: counts[4],
+        cancelled: counts[5],
+        all: counts[6],
       },
     });
   } catch (error) {
@@ -67,6 +96,7 @@ async function buildOrderWhereClause(
   emailInput: string | null,
   status: string | null,
   storeId: string | null,
+  search: string | null,
 ) {
   const where: any = {};
 
@@ -88,6 +118,22 @@ async function buildOrderWhereClause(
 
   if (status && status !== "all") where.status = status;
   if (storeId && storeId !== "all") where.storeId = storeId;
+
+  if (search) {
+    where.AND = [
+      ...(where.AND || []),
+      {
+        OR: [
+          { orderNumber: { contains: search, mode: "insensitive" } },
+          { name: { contains: search, mode: "insensitive" } },
+          { email: { contains: search, mode: "insensitive" } },
+          { phone: { contains: search, mode: "insensitive" } },
+          { user: { name: { contains: search, mode: "insensitive" } } },
+          { user: { email: { contains: search, mode: "insensitive" } } },
+        ],
+      },
+    ];
+  }
 
   return where;
 }

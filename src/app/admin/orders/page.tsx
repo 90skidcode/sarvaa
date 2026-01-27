@@ -5,34 +5,36 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select'
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@/components/ui/table'
 import { getCurrentUser } from '@/lib/api-client'
 import { generateInvoice } from '@/lib/invoice'
 import {
-    ArrowLeft,
-    Check,
-    CheckCircle2,
-    ClipboardList,
-    Clock,
-    Download,
-    Eye,
-    Package,
-    Search
+  ArrowLeft,
+  Check,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  Clock,
+  Download,
+  Eye,
+  Package,
+  Search
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 interface Order {
@@ -82,45 +84,60 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [storeFilter, setStoreFilter] = useState('all')
   const [stores, setStores] = useState<Store[]>([])
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pagination, setPagination] = useState({
+    total: 0,
+    totalPages: 1,
+    limit: 10
+  })
+
+  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({
+    all: 0,
+    pending: 0,
+    confirmed: 0,
+    preparing: 0,
+    ready: 0,
+    delivered: 0,
+    cancelled: 0
+  })
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [debouncedSearch, statusFilter, storeFilter])
 
   useEffect(() => {
     const user = getCurrentUser()
     if (user?.storeId) {
       setStoreFilter(user.storeId)
     }
-    fetchOrders()
-  }, [statusFilter, storeFilter])
-
-  useEffect(() => {
-    fetchStores()
   }, [])
 
-  const fetchStores = async () => {
-    try {
-      const response = await fetch('/api/stores?activeOnly=true')
-      const data = await response.json()
-      setStores(Array.isArray(data.stores) ? data.stores : [])
-    } catch (error) {
-      console.error('Error fetching stores:', error)
-    }
-  }
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     setLoading(true)
     try {
       const user = getCurrentUser()
-      let url = '/api/orders?limit=100'
+      let url = `/api/orders?page=${currentPage}&limit=10`
+      
+      if (debouncedSearch) {
+        url += `&search=${encodeURIComponent(debouncedSearch)}`
+      }
       
       if (statusFilter !== 'all') {
         url += `&status=${statusFilter}`
       }
       
-      // If user is restricted to a store, always filter by that store
-      // otherwise use the storeFilter from UI
       const effectiveStoreId = user?.storeId || storeFilter
       if (effectiveStoreId !== 'all') {
         url += `&storeId=${effectiveStoreId}`
@@ -129,12 +146,23 @@ export default function AdminOrdersPage() {
       const response = await fetch(url)
       const data = await response.json()
       setOrders(Array.isArray(data.orders) ? data.orders : [])
+      if (data.pagination) {
+        setPagination(data.pagination)
+      }
+      if (data.statusCounts) {
+        setStatusCounts(data.statusCounts)
+      }
     } catch (error) {
       console.error('Error fetching orders:', error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentPage, debouncedSearch, statusFilter, storeFilter])
+
+  // Refetch when filters or page changes
+  useEffect(() => {
+    fetchOrders()
+  }, [fetchOrders])
 
   const updateOrderStatus = async (orderId: string, status: string) => {
     try {
@@ -170,22 +198,19 @@ export default function AdminOrdersPage() {
     return colors[status] || 'bg-gray-100 text-gray-800'
   }
 
-  const filteredOrders = orders.filter(order =>
-    order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (order.user?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (order.user?.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (order.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (order.email || '').toLowerCase().includes(searchQuery.toLowerCase())
-  )
 
-  const statusCounts = {
-    all: orders.length,
-    pending: orders.filter(o => o.status === 'pending').length,
-    confirmed: orders.filter(o => o.status === 'confirmed').length,
-    preparing: orders.filter(o => o.status === 'preparing').length,
-    ready: orders.filter(o => o.status === 'ready').length,
-    delivered: orders.filter(o => o.status === 'delivered').length,
-    cancelled: orders.filter(o => o.status === 'cancelled').length
+  useEffect(() => {
+    fetchStores()
+  }, [])
+
+  const fetchStores = async () => {
+    try {
+      const response = await fetch('/api/stores?activeOnly=true')
+      const data = await response.json()
+      setStores(Array.isArray(data.stores) ? data.stores : [])
+    } catch (error) {
+      console.error('Error fetching stores:', error)
+    }
   }
 
   const selectedOrder = orders.find(o => o.id === selectedOrderId)
@@ -518,7 +543,7 @@ export default function AdminOrdersPage() {
           )
         }
 
-        if (filteredOrders.length === 0) {
+        if (orders.length === 0) {
           return (
             <Card className="border-none shadow-sm rounded-[2rem] bg-gray-50/30">
               <CardContent className="py-24 text-center">
@@ -549,7 +574,7 @@ export default function AdminOrdersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredOrders.map((order) => (
+                {orders.map((order) => (
                   <TableRow 
                     key={order.id} 
                     className="group cursor-pointer hover:bg-purple-50/30 border-b border-gray-50 transition-all duration-300 h-16"
@@ -617,6 +642,96 @@ export default function AdminOrdersPage() {
                 ))}
               </TableBody>
             </Table>
+            
+            {/* Pagination Controls - Always show summary if results exist */}
+            {pagination.total > 0 && (
+              <div className="flex items-center justify-between px-6 py-5 border-t border-gray-50 bg-gray-50/50">
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest hidden sm:block">
+                  Showing {(currentPage - 1) * pagination.limit + 1} to {Math.min(currentPage * pagination.limit, pagination.total)} of {pagination.total} orders
+                </div>
+                
+                <div className="flex items-center gap-1.5 ml-auto">
+                  {/* Previous Button */}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    className="h-8 w-8 rounded-xl border-gray-200 text-gray-400 hover:text-[#743181]"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  
+                  {/* Numeric Page Buttons */}
+                  <div className="flex items-center gap-1">
+                    {(() => {
+                      const pages: (number | string)[] = [];
+                      const totalPages = pagination.totalPages;
+                      
+                      if (totalPages <= 7) {
+                        for (let i = 1; i <= totalPages; i++) pages.push(i);
+                      } else {
+                        // Always show first page
+                        pages.push(1);
+                        
+                        if (currentPage > 3) pages.push('...');
+                        
+                        // Show pages around current
+                        const start = Math.max(2, currentPage - 1);
+                        const end = Math.min(totalPages - 1, currentPage + 1);
+                        
+                        for (let i = start; i <= end; i++) {
+                          if (i > 1 && i < totalPages) pages.push(i);
+                        }
+                        
+                        if (currentPage < totalPages - 2) pages.push('...');
+                        
+                        // Always show last page
+                        if (totalPages > 1) pages.push(totalPages);
+                      }
+
+                      return pages.map((p, idx) => {
+                        if (p === '...') {
+                          return (
+                            <span key={`ellipsis-${idx}`} className="text-gray-300 px-1 text-xs font-black">
+                              •••
+                            </span>
+                          );
+                        }
+                        
+                        const pageNum = p as number;
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentPage === pageNum ? "default" : "ghost"}
+                            size="sm"
+                            onClick={() => setCurrentPage(pageNum)}
+                            className={`h-8 w-8 rounded-xl font-bold text-[10px] transition-all duration-300 ${
+                              currentPage === pageNum 
+                                ? "bg-[#743181] hover:bg-[#5a2a6e] shadow-md shadow-purple-100 text-white" 
+                                : "text-gray-400 hover:text-[#743181] hover:bg-purple-50"
+                            }`}
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      });
+                    })()}
+                  </div>
+
+                  {/* Next Button */}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    disabled={currentPage === pagination.totalPages}
+                    onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
+                    className="h-8 w-8 rounded-xl border-gray-200 text-gray-400 hover:text-[#743181]"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </Card>
         )
       })()}
