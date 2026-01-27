@@ -32,6 +32,8 @@ model User {
   cartItems CartItem[]
   coupon    Coupon?    @relation(fields: [couponId], references: [id])
   couponId  String?
+  storeId   String?
+  store     Store?     @relation(fields: [storeId], references: [id])
 }
 
 model Category {
@@ -169,6 +171,7 @@ model Store {
   updatedAt        DateTime          @updatedAt
   orders           Order[]
   customCakeOrders CustomCakeOrder[]
+  users            User[]
 }
 
 model CustomCakeOrder {

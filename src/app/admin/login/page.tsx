@@ -37,10 +37,10 @@ export default function AdminLoginPage() {
       }
 
       // Store admin session
-      localStorage.setItem('user', JSON.stringify(data.user))
+      localStorage.setItem('adminUser', JSON.stringify(data.user))
       // For now, we'll use a dummy token for admin since the backend expects one
       // In a real app, the login API should return a proper JWT
-      localStorage.setItem('authToken', 'admin-session-token')
+      localStorage.setItem('adminToken', 'admin-session-token')
 
       toast.success('Admin login successful!', {
         description: `Welcome back, ${data.user.name}`

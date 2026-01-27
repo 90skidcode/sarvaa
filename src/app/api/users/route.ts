@@ -13,6 +13,8 @@ export async function GET() {
         phone: true,
         address: true,
         role: true,
+        storeId: true,
+        store: true,
         createdAt: true,
       },
       orderBy: {
@@ -68,6 +70,7 @@ export async function POST(request: NextRequest) {
         phone,
         address,
         role: role || "customer",
+        storeId: body.storeId || null,
       },
       select: {
         id: true,
@@ -76,6 +79,8 @@ export async function POST(request: NextRequest) {
         phone: true,
         address: true,
         role: true,
+        storeId: true,
+        store: true,
         createdAt: true,
       },
     });

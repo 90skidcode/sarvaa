@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { getCurrentUser, logout } from '@/lib/api-client'
+import { getCurrentUser } from '@/lib/api-client'
 import { Cake, ClipboardList, ImageIcon, LayoutDashboard, Lock, LogOut, Package, Store, Tag, Users } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -40,11 +40,11 @@ export default function AdminLayout({
   }, [pathname, router])
 
   const handleLogout = () => {
-    logout()
-    // logout() from api-client already clears storage and redirects to /login
-    // But for admin we might want to redirect specifically to /admin/login
-    localStorage.removeItem('user')
-    localStorage.removeItem('authToken')
+    // We can't use the shared logout() here easily if it redirects to /login by default
+    // and we want /admin/login. The api-client.ts logout() is now context-aware, 
+    // but let's be explicit and safe.
+    localStorage.removeItem('adminUser')
+    localStorage.removeItem('adminToken')
     toast.success('Signed out successfully')
     router.push('/admin/login')
   }

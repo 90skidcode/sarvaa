@@ -70,6 +70,8 @@ export default function ProfilePage() {
           })
           // Update localStorage with merged data
           localStorage.setItem('user', JSON.stringify(mergedUser))
+          // Dispatch custom event to notify other components (like Header)
+          window.dispatchEvent(new Event('userUpdated'))
         } else {
           // Use localStorage data if API fails (user not in DB yet)
           setUser(currentUser)

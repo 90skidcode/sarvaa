@@ -133,18 +133,36 @@ export default function LoginPage() {
       // Get Firebase ID token for API authentication
       const idToken = await user.getIdToken()
       
-      // Store user info and token in localStorage
       // Extract phone number without country code
       const phoneWithoutCode = user.phoneNumber?.replace('+91', '') || ''
       
+      // Try to fetch existing profile
+      let profileData = { name: '', email: '', address: '' }
+      try {
+        const response = await fetch('/api/profile', {
+          headers: {
+            'x-firebase-uid': user.uid
+          }
+        })
+        if (response.ok) {
+          const { profile } = await response.json()
+          profileData = {
+            name: profile.name || '',
+            email: profile.email || '',
+            address: profile.address || ''
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching profile during login:', error)
+      }
+
+      // Store user info and token in localStorage
       localStorage.setItem('user', JSON.stringify({
         id: user.uid,
         uid: user.uid,
         phoneNumber: user.phoneNumber,
         phone: phoneWithoutCode,
-        name: '',
-        email: '',
-        address: '',
+        ...profileData,
         idToken: idToken,
       }))
       

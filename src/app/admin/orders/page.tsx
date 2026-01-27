@@ -19,6 +19,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
+import { getCurrentUser } from '@/lib/api-client'
 import { generateInvoice } from '@/lib/invoice'
 import {
     ArrowLeft,
@@ -87,6 +88,10 @@ export default function AdminOrdersPage() {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
 
   useEffect(() => {
+    const user = getCurrentUser()
+    if (user?.storeId) {
+      setStoreFilter(user.storeId)
+    }
     fetchOrders()
   }, [statusFilter, storeFilter])
 
@@ -107,12 +112,18 @@ export default function AdminOrdersPage() {
   const fetchOrders = async () => {
     setLoading(true)
     try {
+      const user = getCurrentUser()
       let url = '/api/orders?limit=100'
+      
       if (statusFilter !== 'all') {
         url += `&status=${statusFilter}`
       }
-      if (storeFilter !== 'all') {
-        url += `&storeId=${storeFilter}`
+      
+      // If user is restricted to a store, always filter by that store
+      // otherwise use the storeFilter from UI
+      const effectiveStoreId = user?.storeId || storeFilter
+      if (effectiveStoreId !== 'all') {
+        url += `&storeId=${effectiveStoreId}`
       }
 
       const response = await fetch(url)
@@ -213,6 +224,7 @@ export default function AdminOrdersPage() {
                 <Select
                   value={storeFilter}
                   onValueChange={setStoreFilter}
+                  disabled={!!getCurrentUser()?.storeId}
                 >
                   <SelectTrigger className="w-full md:w-[180px] h-10 rounded-xl bg-white border-gray-200">
                     <SelectValue placeholder="All Branches" />

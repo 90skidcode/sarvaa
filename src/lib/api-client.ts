@@ -1,14 +1,35 @@
 // Utility for making authenticated API calls
 
+const AUTH_KEYS = {
+  admin: {
+    user: "adminUser",
+    token: "adminToken",
+  },
+  customer: {
+    user: "user",
+    token: "authToken",
+  },
+};
+
+function getStorageKeys() {
+  if (typeof window === "undefined") return AUTH_KEYS.customer;
+
+  // If we are in the admin portal, use admin keys
+  if (window.location.pathname.startsWith("/admin")) {
+    return AUTH_KEYS.admin;
+  }
+
+  return AUTH_KEYS.customer;
+}
+
 export async function fetchWithAuth(url: string, options: RequestInit = {}) {
-  // Get auth token from localStorage
-  const authToken = localStorage.getItem("authToken");
+  const keys = getStorageKeys();
+  const authToken = localStorage.getItem(keys.token);
 
   if (!authToken) {
     throw new Error("No authentication token found. Please login.");
   }
 
-  // Add authorization header
   const headers = {
     ...options.headers,
     Authorization: `Bearer ${authToken}`,
@@ -20,33 +41,37 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
     headers,
   });
 
-  // Handle 401 Unauthorized
   if (response.status === 401) {
-    // Clear local storage and redirect to login
-    localStorage.removeItem("user");
-    localStorage.removeItem("authToken");
-    window.location.href = "/login";
+    localStorage.removeItem(keys.user);
+    localStorage.removeItem(keys.token);
+
+    // Redirect based on current context
+    if (window.location.pathname.startsWith("/admin")) {
+      window.location.href = "/admin/login";
+    } else {
+      window.location.href = "/login";
+    }
     throw new Error("Session expired. Please login again.");
   }
 
   return response;
 }
 
-// Check if user is authenticated
 export function isAuthenticated(): boolean {
   if (typeof window === "undefined") return false;
 
-  const authToken = localStorage.getItem("authToken");
-  const user = localStorage.getItem("user");
+  const keys = getStorageKeys();
+  const authToken = localStorage.getItem(keys.token);
+  const user = localStorage.getItem(keys.user);
 
   return !!(authToken && user);
 }
 
-// Get current user from localStorage
 export function getCurrentUser() {
   if (typeof window === "undefined") return null;
 
-  const userStr = localStorage.getItem("user");
+  const keys = getStorageKeys();
+  const userStr = localStorage.getItem(keys.user);
   if (!userStr) return null;
 
   try {
@@ -56,11 +81,16 @@ export function getCurrentUser() {
   }
 }
 
-// Logout user
 export function logout() {
   if (typeof window === "undefined") return;
 
-  localStorage.removeItem("user");
-  localStorage.removeItem("authToken");
-  window.location.href = "/login";
+  const keys = getStorageKeys();
+  localStorage.removeItem(keys.user);
+  localStorage.removeItem(keys.token);
+
+  if (window.location.pathname.startsWith("/admin")) {
+    window.location.href = "/admin/login";
+  } else {
+    window.location.href = "/login";
+  }
 }
