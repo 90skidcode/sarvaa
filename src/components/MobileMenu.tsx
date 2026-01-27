@@ -1,9 +1,10 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Menu, X } from 'lucide-react'
+import { getCurrentUser, isAuthenticated, logout } from '@/lib/api-client'
+import { ClipboardList, LogOut, Menu, User, X } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface MobileMenuProps {
   readonly className?: string
@@ -11,6 +12,36 @@ interface MobileMenuProps {
 
 export function MobileMenu({ className }: MobileMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [userName, setUserName] = useState('')
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const authenticated = isAuthenticated()
+      setIsLoggedIn(authenticated)
+      if (authenticated) {
+        const user = getCurrentUser()
+        setUserName(user?.name || user?.email || 'User')
+      }
+    }
+    checkAuth()
+
+    // Listen for storage changes (login/logout from other tabs)
+    globalThis.addEventListener('storage', checkAuth)
+    
+    // Listen for custom user update event (profile changes in same tab)
+    globalThis.addEventListener('userUpdated', checkAuth)
+    
+    return () => {
+      globalThis.removeEventListener('storage', checkAuth)
+      globalThis.removeEventListener('userUpdated', checkAuth)
+    }
+  }, [])
+
+  const handleLogout = () => {
+    logout()
+    setIsOpen(false)
+  }
 
   const menuItems = [
     { label: 'Home', href: '/' },
@@ -84,13 +115,51 @@ export function MobileMenu({ className }: MobileMenuProps) {
 
               {/* Additional Links */}
               <div className="space-y-2">
-                <Link
-                  href="/login"
-                  onClick={() => setIsOpen(false)}
-                  className="block py-2 px-4 text-sm text-gray-600 hover:text-[#743181]"
-                >
-                  Login / Sign Up
-                </Link>
+                {isLoggedIn ? (
+                  <>
+                    <div className="flex items-center gap-3 px-4 py-2 mb-2 bg-purple-50 rounded-lg">
+                      <div className="w-8 h-8 bg-gradient-to-br from-[#743181] to-[#5a2a6e] rounded-full flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">
+                          {userName.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <span className="text-gray-700 font-medium text-sm truncate">
+                        {userName}
+                      </span>
+                    </div>
+                    <Link
+                      href="/profile"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-2 py-2 px-4 text-sm text-gray-600 hover:text-[#743181]"
+                    >
+                      <User className="h-4 w-4" />
+                      My Profile
+                    </Link>
+                    <Link
+                      href="/profile/orders"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-2 py-2 px-4 text-sm text-gray-600 hover:text-[#743181]"
+                    >
+                      <ClipboardList className="h-4 w-4" />
+                      My Orders
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-2 w-full py-2 px-4 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    href="/login"
+                    onClick={() => setIsOpen(false)}
+                    className="block py-2 px-4 text-sm text-gray-600 hover:text-[#743181]"
+                  >
+                    Login / Sign Up
+                  </Link>
+                )}
               </div>
 
               {/* Branding */}
