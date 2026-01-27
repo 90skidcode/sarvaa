@@ -138,6 +138,19 @@ export async function POST(request: NextRequest) {
     const orderCount = await db.order.count();
     const orderNumber = `ORD-${String(orderCount + 1).padStart(6, "0")}`;
 
+    // Verify if userId exists in User table OR find by email
+    let userToConnect: string | null = null;
+    if (userId) {
+      const existingUser = await db.user.findFirst({
+        where: {
+          OR: [{ id: userId }, { email: email || undefined }],
+        },
+      });
+      if (existingUser) {
+        userToConnect = existingUser.id;
+      }
+    }
+
     // Create Order with Transaction
     const order = await db.$transaction(
       async (tx) => {
@@ -156,12 +169,15 @@ export async function POST(request: NextRequest) {
               ? { coupon: { connect: { id: appliedCoupon.id } } }
               : {}),
             ...(storeId ? { store: { connect: { id: storeId } } } : {}),
-            ...(userId ? { user: { connect: { id: userId } } } : {}),
+            ...(userToConnect
+              ? { user: { connect: { id: userToConnect } } }
+              : {}),
             items: {
               create: items.map((item: any) => ({
                 productId: item.productId,
                 quantity: item.quantity,
                 price: item.price,
+                weight: item.weight || null,
               })),
             },
             statusHistory: {

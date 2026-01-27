@@ -10,14 +10,21 @@ export async function GET(
     const params = await Promise.resolve(context.params);
     const productId = params.id;
 
-    console.log("Fetching product with ID:", productId);
+    console.log("Fetching product with ID/Slug:", productId);
 
-    const product = await db.product.findUnique({
+    // Attempt lookup by ID
+    let product = await db.product.findUnique({
       where: { id: productId },
-      include: {
-        category: true,
-      },
+      include: { category: true },
     });
+
+    // Fallback to lookup by slug if not found by ID
+    if (!product) {
+      product = await db.product.findUnique({
+        where: { slug: productId },
+        include: { category: true },
+      });
+    }
 
     console.log("Product found:", product ? "Yes" : "No");
 

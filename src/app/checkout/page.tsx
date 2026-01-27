@@ -171,7 +171,8 @@ export default function CheckoutPage() {
           items: items.map(item => ({
             productId: item.productId,
             quantity: item.quantity,
-            price: item.price
+            price: item.price,
+            weight: item.variantValue
           }))
         })
       })

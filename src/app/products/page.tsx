@@ -4,8 +4,14 @@ import { ProductCard } from '@/components/ProductCard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Filter, Search } from 'lucide-react'
-import { useSearchParams } from 'next/navigation'
-import { Suspense, useEffect, useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { Suspense, useCallback, useEffect, useState } from 'react'
+
+interface Category {
+  id: string
+  name: string
+  slug: string
+}
 
 interface Product {
   id: string
@@ -25,44 +31,42 @@ interface Product {
   }
 }
 
-const FILTER_CATEGORIES = [
-  { label: 'All', value: 'all' },
-  { label: 'Traditional', value: 'traditional-tn' },
-  { label: 'Temple Prasadam', value: 'temple-prasadam' },
-  { label: 'Chettinad', value: 'chettinad-specials' },
-  { label: 'Festival', value: 'festival-specials' },
-  { label: 'Gift Boxes', value: 'gift-boxes' }
-]
-
 function ProductsContent() {
+  const router = useRouter()
+  const pathname = usePathname()
   const searchParams = useSearchParams()
+  
+  const categoryParam = searchParams.get('category')
   const searchQuery = searchParams.get('search')
   
+  const [categories, setCategories] = useState<Category[]>([])
   const [allProducts, setAllProducts] = useState<Product[]>([])
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeFilter, setActiveFilter] = useState('all')
+  const [activeFilter, setActiveFilter] = useState(categoryParam || 'all')
 
+  // Fetch categories on mount
   useEffect(() => {
-    fetchProducts()
-  }, [activeFilter])
-
-  useEffect(() => {
-    // Apply search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      const filtered = allProducts.filter(product => 
-        product.name.toLowerCase().includes(query) ||
-        product.description.toLowerCase().includes(query) ||
-        product.category.name.toLowerCase().includes(query)
-      )
-      setFilteredProducts(filtered)
-    } else {
-      setFilteredProducts(allProducts)
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories?activeOnly=true')
+        const data = await response.json()
+        if (data.categories) {
+          setCategories(data.categories)
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error)
+      }
     }
-  }, [searchQuery, allProducts])
+    fetchCategories()
+  }, [])
 
-  const fetchProducts = async () => {
+  // Sync activeFilter with URL parameter
+  useEffect(() => {
+    setActiveFilter(categoryParam || 'all')
+  }, [categoryParam])
+
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true)
       const url = activeFilter === 'all' 
@@ -77,16 +81,50 @@ function ProductsContent() {
     } finally {
       setLoading(false)
     }
+  }, [activeFilter])
+
+  useEffect(() => {
+    fetchProducts()
+  }, [fetchProducts])
+
+  useEffect(() => {
+    // Apply search filter on the allProducts we just fetched
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      const filtered = allProducts.filter(product => 
+        product.name.toLowerCase().includes(query) ||
+        product.description.toLowerCase().includes(query) ||
+        product.category.name.toLowerCase().includes(query)
+      )
+      setFilteredProducts(filtered)
+    } else {
+      setFilteredProducts(allProducts)
+    }
+  }, [searchQuery, allProducts])
+
+  const handleFilterChange = (categorySlug: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (categorySlug === 'all') {
+      params.delete('category')
+    } else {
+      params.set('category', categorySlug)
+    }
+    router.push(`${pathname}?${params.toString()}`)
   }
 
   const products = filteredProducts
+
+  // Prepare categories for display including 'All'
+  const displayCategories = [
+    { name: 'All', slug: 'all' },
+    ...categories
+  ]
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Tamil Sweets Collection</h1>
           <p className="text-lg text-gray-600">
             Discover our authentic Tamil Nadu sweets, handcrafted with pure ghee and traditional recipes
@@ -109,12 +147,13 @@ function ProductsContent() {
                   value={searchQuery || ''}
                   onChange={(e) => {
                     const query = e.target.value
+                    const params = new URLSearchParams(searchParams.toString())
                     if (query) {
-                      globalThis.history.pushState({}, '', `/products?search=${encodeURIComponent(query)}`)
+                      params.set('search', query)
                     } else {
-                      globalThis.history.pushState({}, '', '/products')
+                      params.delete('search')
                     }
-                    globalThis.dispatchEvent(new PopStateEvent('popstate'))
+                    router.push(`${pathname}?${params.toString()}`)
                   }}
                   placeholder="Search by name, description..."
                   className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#743181] focus:border-transparent text-base"
@@ -129,13 +168,13 @@ function ProductsContent() {
                 <h2 className="text-lg font-semibold text-gray-900">Filter by Category</h2>
               </div>
               <div className="flex flex-wrap gap-2">
-                {FILTER_CATEGORIES.map((category) => {
-                  const isactive = activeFilter === category.value
+                {displayCategories.map((category) => {
+                  const isactive = activeFilter === category.slug
                   return (
                     <Button
-                      key={`filter-${category.value}`}
+                      key={`filter-${category.slug}`}
                       variant={isactive ? 'default' : 'outline'}
-                      onClick={() => setActiveFilter(category.value)}
+                      onClick={() => handleFilterChange(category.slug)}
                       size="sm"
                       className={
                         isactive
@@ -143,7 +182,7 @@ function ProductsContent() {
                           : 'border-gray-300 text-gray-700 hover:border-[#743181] hover:text-[#743181]'
                       }
                     >
-                      {category.label}
+                      {category.name}
                     </Button>
                   )
                 })}
@@ -164,8 +203,9 @@ function ProductsContent() {
               </div>
               <button
                 onClick={() => {
-                  globalThis.history.pushState({}, '', '/products')
-                  globalThis.dispatchEvent(new PopStateEvent('popstate'))
+                  const params = new URLSearchParams(searchParams.toString())
+                  params.delete('search')
+                  router.push(`${pathname}?${params.toString()}`)
                 }}
                 className="text-sm text-gray-600 hover:text-[#743181] underline"
               >
@@ -198,7 +238,7 @@ function ProductsContent() {
               </p>
               {activeFilter !== 'all' && (
                 <Badge variant="outline" className="text-[#743181] border-[#743181]">
-                  {FILTER_CATEGORIES.find((c) => c.value === activeFilter)?.label}
+                  {displayCategories.find((c) => c.slug === activeFilter)?.name}
                 </Badge>
               )}
             </div>
@@ -211,7 +251,7 @@ function ProductsContent() {
                   try {
                     additionalImages = JSON.parse(product.images)
                   } catch (e) {
-                    // Ignore parsing errors
+                    console.error('Error parsing product images:', e)
                   }
                 }
 

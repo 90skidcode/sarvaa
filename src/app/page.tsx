@@ -52,7 +52,7 @@ export default function Home() {
         const categoriesData = await categoriesRes.json()
 
         // Fallback or random values for rating/reviews as they aren't in schema yet
-        const enrichedProducts = (productsData.products || productsData || []).slice(0, 6).map((p: any) => ({
+        const enrichedProducts = (productsData.products || productsData || []).slice(0, 8).map((p: any) => ({
           ...p,
           rating: 4.5 + Math.random() * 0.5,
           reviews: Math.floor(Math.random() * 1000) + 100,
@@ -152,7 +152,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {loading && Array.from({ length: 4 }).map((_, i) => (
+            {loading && Array.from({ length: 3 }).map((_, i) => (
               <div key={`product-skeleton-${i+1}`} className="animate-pulse bg-purple-50 rounded-2xl h-[450px]"></div>
             ))}
             
