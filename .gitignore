@@ -47,3 +47,7 @@ test
 prompt
 
 server.log
+
+# database
+prisma/*.db
+prisma/*.db-journal
