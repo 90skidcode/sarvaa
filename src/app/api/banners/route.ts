@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import sharp from "sharp";
 
 // GET all banners
 export async function GET() {
@@ -49,19 +50,47 @@ export async function POST(request: NextRequest) {
 
     // Save desktop image
     const desktopBytes = await desktopImageFile.arrayBuffer();
-    const desktopBuffer = Buffer.from(desktopBytes);
-    const desktopFilename = `desktop-${Date.now()}-${desktopImageFile.name.replaceAll(/\s/g, "-")}`;
+    const desktopOriginalBuffer = Buffer.from(desktopBytes);
+    let desktopFinalBuffer = desktopOriginalBuffer;
+    let desktopExtension = path.extname(desktopImageFile.name);
+
+    if (desktopImageFile.type.startsWith("image/")) {
+      try {
+        desktopFinalBuffer = await sharp(desktopOriginalBuffer)
+          .webp({ quality: 80 })
+          .toBuffer();
+        desktopExtension = ".webp";
+      } catch (e) {
+        console.warn("Desktop banner compression failed:", e);
+      }
+    }
+
+    const desktopFilename = `desktop-${Date.now()}-${desktopImageFile.name.replaceAll(/\s/g, "-")}${desktopExtension}`;
     const desktopPath = path.join(bannersDir, desktopFilename);
-    await writeFile(desktopPath, desktopBuffer);
+    await writeFile(desktopPath, desktopFinalBuffer);
 
     // Save mobile image if provided
     let mobileImagePath: string | null = null;
     if (mobileImageFile && mobileImageFile.size > 0) {
       const mobileBytes = await mobileImageFile.arrayBuffer();
-      const mobileBuffer = Buffer.from(mobileBytes);
-      const mobileFilename = `mobile-${Date.now()}-${mobileImageFile.name.replaceAll(/\s/g, "-")}`;
+      const mobileOriginalBuffer = Buffer.from(mobileBytes);
+      let mobileFinalBuffer = mobileOriginalBuffer;
+      let mobileExtension = path.extname(mobileImageFile.name);
+
+      if (mobileImageFile.type.startsWith("image/")) {
+        try {
+          mobileFinalBuffer = await sharp(mobileOriginalBuffer)
+            .webp({ quality: 80 })
+            .toBuffer();
+          mobileExtension = ".webp";
+        } catch (e) {
+          console.warn("Mobile banner compression failed:", e);
+        }
+      }
+
+      const mobileFilename = `mobile-${Date.now()}-${mobileImageFile.name.replaceAll(/\s/g, "-")}${mobileExtension}`;
       const mobilePath = path.join(bannersDir, mobileFilename);
-      await writeFile(mobilePath, mobileBuffer);
+      await writeFile(mobilePath, mobileFinalBuffer);
       mobileImagePath = `/banners/${mobileFilename}`;
     }
 

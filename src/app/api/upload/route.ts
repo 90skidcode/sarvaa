@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import sharp from "sharp";
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,17 +20,34 @@ export async function POST(request: NextRequest) {
       // Directory might already exist
     }
 
-    // Generate unique filename
     const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const originalBuffer = Buffer.from(bytes);
 
+    let finalBuffer = originalBuffer;
+    let extension = path.extname(file.name);
+
+    // Check if it's an image and compress
+    if (file.type.startsWith("image/")) {
+      try {
+        finalBuffer = await sharp(originalBuffer)
+          .webp({ quality: 80 })
+          .toBuffer();
+        extension = ".webp";
+      } catch (e) {
+        console.warn("Image compression failed, saving original file:", e);
+      }
+    }
+
+    // Generate unique filename
     const timestamp = Date.now();
-    const originalName = file.name.replaceAll(/\s+/g, "-");
-    const filename = `${timestamp}-${originalName}`;
+    const originalNameWithoutExt = path
+      .parse(file.name)
+      .name.replaceAll(/\s+/g, "-");
+    const filename = `${timestamp}-${originalNameWithoutExt}${extension}`;
     const filepath = path.join(uploadsDir, filename);
 
     // Write file
-    await writeFile(filepath, buffer);
+    await writeFile(filepath, finalBuffer);
 
     // Return URL
     const url = `/uploads/${filename}`;

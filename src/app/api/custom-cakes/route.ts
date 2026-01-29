@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { mkdir, writeFile } from "fs/promises";
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
+import sharp from "sharp";
 
 // GET all custom cake orders (Admin)
 export async function GET(request: NextRequest) {
@@ -63,10 +64,24 @@ export async function POST(request: NextRequest) {
     // Save all images
     for (const file of cakeImageFiles) {
       const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const filename = `cake-${Date.now()}-${Math.random().toString(36).substring(7)}-${file.name.replace(/\s/g, "-")}`;
+      const originalBuffer = Buffer.from(bytes);
+      let finalBuffer = originalBuffer;
+      let extension = path.extname(file.name);
+
+      if (file.type.startsWith("image/")) {
+        try {
+          finalBuffer = await sharp(originalBuffer)
+            .webp({ quality: 80 })
+            .toBuffer();
+          extension = ".webp";
+        } catch (e) {
+          console.warn("Image compression failed, saving original file:", e);
+        }
+      }
+
+      const filename = `cake-${Date.now()}-${Math.random().toString(36).substring(7)}-${path.parse(file.name).name.replace(/\s/g, "-")}${extension}`;
       const filePath = path.join(uploadDir, filename);
-      await writeFile(filePath, buffer);
+      await writeFile(filePath, finalBuffer);
       cakeImagePaths.push(`/uploads/custom-cakes/${filename}`);
     }
 
