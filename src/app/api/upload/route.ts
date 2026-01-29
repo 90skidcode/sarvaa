@@ -1,6 +1,6 @@
-import { mkdir, writeFile } from "fs/promises";
 import { NextRequest, NextResponse } from "next/server";
-import path from "path";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
+    const uploadsDir = path.resolve("public/uploads");
     try {
       await mkdir(uploadsDir, { recursive: true });
     } catch (error) {
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
 
     const timestamp = Date.now();
-    const originalName = file.name.replace(/\s+/g, "-");
+    const originalName = file.name.replaceAll(/\s+/g, "-");
     const filename = `${timestamp}-${originalName}`;
     const filepath = path.join(uploadsDir, filename);
 

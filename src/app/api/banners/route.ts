@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { mkdir, writeFile } from "fs/promises";
 import { NextRequest, NextResponse } from "next/server";
-import path from "path";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
 
 // GET all banners
 export async function GET() {
@@ -27,7 +27,8 @@ export async function POST(request: NextRequest) {
 
     const title = formData.get("title") as string;
     const link = formData.get("link") as string | null;
-    const displayOrder = parseInt(formData.get("displayOrder") as string) || 0;
+    const displayOrder =
+      Number.parseInt(formData.get("displayOrder") as string) || 0;
     const desktopImageFile = formData.get("desktopImage") as File | null;
     const mobileImageFile = formData.get("mobileImage") as File | null;
 
@@ -43,22 +44,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Create banners directory if it doesn't exist
-    const bannersDir = path.join(process.cwd(), "public", "banners");
+    const bannersDir = path.resolve("public/banners");
     await mkdir(bannersDir, { recursive: true });
 
     // Save desktop image
     const desktopBytes = await desktopImageFile.arrayBuffer();
     const desktopBuffer = Buffer.from(desktopBytes);
-    const desktopFilename = `desktop-${Date.now()}-${desktopImageFile.name.replace(/\s/g, "-")}`;
+    const desktopFilename = `desktop-${Date.now()}-${desktopImageFile.name.replaceAll(/\s/g, "-")}`;
     const desktopPath = path.join(bannersDir, desktopFilename);
     await writeFile(desktopPath, desktopBuffer);
 
     // Save mobile image if provided
-    let mobileImagePath = null;
+    let mobileImagePath: string | null = null;
     if (mobileImageFile && mobileImageFile.size > 0) {
       const mobileBytes = await mobileImageFile.arrayBuffer();
       const mobileBuffer = Buffer.from(mobileBytes);
-      const mobileFilename = `mobile-${Date.now()}-${mobileImageFile.name.replace(/\s/g, "-")}`;
+      const mobileFilename = `mobile-${Date.now()}-${mobileImageFile.name.replaceAll(/\s/g, "-")}`;
       const mobilePath = path.join(bannersDir, mobileFilename);
       await writeFile(mobilePath, mobileBuffer);
       mobileImagePath = `/banners/${mobileFilename}`;

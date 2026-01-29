@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { unlink, writeFile } from "fs/promises";
 import { NextRequest, NextResponse } from "next/server";
-import path from "path";
+import { unlink, writeFile } from "node:fs/promises";
+import path from "node:path";
 
 // GET single banner
 export async function GET(
@@ -39,7 +39,8 @@ export async function PUT(
 
     const title = formData.get("title") as string;
     const link = formData.get("link") as string | null;
-    const displayOrder = parseInt(formData.get("displayOrder") as string) || 0;
+    const displayOrder =
+      Number.parseInt(formData.get("displayOrder") as string) || 0;
     const isActive = formData.get("isActive") === "true";
     const desktopImageFile = formData.get("desktopImage") as File | null;
     const mobileImageFile = formData.get("mobileImage") as File | null;
@@ -58,20 +59,21 @@ export async function PUT(
 
     // Update desktop image if new one provided
     if (desktopImageFile && desktopImageFile.size > 0) {
-      const bannersDir = path.join(process.cwd(), "public", "banners");
+      const bannersDir = path.resolve("public/banners");
       const desktopBytes = await desktopImageFile.arrayBuffer();
       const desktopBuffer = Buffer.from(desktopBytes);
-      const desktopFilename = `desktop-${Date.now()}-${desktopImageFile.name.replace(/\s/g, "-")}`;
+      const desktopFilename = `desktop-${Date.now()}-${desktopImageFile.name.replaceAll(/\s/g, "-")}`;
       const desktopPath = path.join(bannersDir, desktopFilename);
       await writeFile(desktopPath, desktopBuffer);
       updateData.desktopImage = `/banners/${desktopFilename}`;
 
       // Delete old desktop image
       try {
-        const oldPath = path.join(
-          process.cwd(),
+        const oldPath = path.resolve(
           "public",
-          existingBanner.desktopImage,
+          existingBanner.desktopImage.startsWith("/")
+            ? existingBanner.desktopImage.slice(1)
+            : existingBanner.desktopImage,
         );
         await unlink(oldPath);
       } catch {
@@ -81,10 +83,10 @@ export async function PUT(
 
     // Update mobile image if new one provided
     if (mobileImageFile && mobileImageFile.size > 0) {
-      const bannersDir = path.join(process.cwd(), "public", "banners");
+      const bannersDir = path.resolve("public/banners");
       const mobileBytes = await mobileImageFile.arrayBuffer();
       const mobileBuffer = Buffer.from(mobileBytes);
-      const mobileFilename = `mobile-${Date.now()}-${mobileImageFile.name.replace(/\s/g, "-")}`;
+      const mobileFilename = `mobile-${Date.now()}-${mobileImageFile.name.replaceAll(/\s/g, "-")}`;
       const mobilePath = path.join(bannersDir, mobileFilename);
       await writeFile(mobilePath, mobileBuffer);
       updateData.mobileImage = `/banners/${mobileFilename}`;
@@ -92,10 +94,11 @@ export async function PUT(
       // Delete old mobile image
       if (existingBanner.mobileImage) {
         try {
-          const oldPath = path.join(
-            process.cwd(),
+          const oldPath = path.resolve(
             "public",
-            existingBanner.mobileImage,
+            existingBanner.mobileImage.startsWith("/")
+              ? existingBanner.mobileImage.slice(1)
+              : existingBanner.mobileImage,
           );
           await unlink(oldPath);
         } catch {
@@ -134,10 +137,11 @@ export async function DELETE(
 
     // Delete images
     try {
-      const desktopPath = path.join(
-        process.cwd(),
+      const desktopPath = path.resolve(
         "public",
-        existingBanner.desktopImage,
+        existingBanner.desktopImage.startsWith("/")
+          ? existingBanner.desktopImage.slice(1)
+          : existingBanner.desktopImage,
       );
       await unlink(desktopPath);
     } catch {
@@ -146,10 +150,11 @@ export async function DELETE(
 
     if (existingBanner.mobileImage) {
       try {
-        const mobilePath = path.join(
-          process.cwd(),
+        const mobilePath = path.resolve(
           "public",
-          existingBanner.mobileImage,
+          existingBanner.mobileImage.startsWith("/")
+            ? existingBanner.mobileImage.slice(1)
+            : existingBanner.mobileImage,
         );
         await unlink(mobilePath);
       } catch {
