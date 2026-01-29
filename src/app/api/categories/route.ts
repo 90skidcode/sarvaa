@@ -24,9 +24,7 @@ export async function GET(request: NextRequest) {
             select: { products: true },
           },
         },
-        orderBy: {
-          name: "asc",
-        },
+        orderBy: [{ displayOrder: "asc" } as any, { name: "asc" }],
       }),
       db.category.count({ where }),
     ]);
