@@ -113,32 +113,32 @@ export function HeroBannerSlider() {
               ? banner.mobileImage 
               : banner.desktopImage
 
-            const BannerContent = (
+            const isLink = !!banner.link
+            
+            return (
               <div
+                key={banner.id}
                 className="flex-[0_0_100%] min-w-0 relative"
               >
-                {/* Full-width Banner Image */}
-                <div className="relative w-full" style={{ aspectRatio: isMobile ? '1.5/1' : '2.5/1' }}>
-                  <img
-                    src={imageSrc}
-                    alt={banner.title}
-                    className="w-full h-full object-cover object-center"
-                  />
-                </div>
-              </div>
-            )
-
-            return banner.link ? (
-              <Link 
-                key={banner.id} 
-                href={banner.link} 
-                className="flex-[0_0_100%] min-w-0 cursor-pointer"
-              >
-                {BannerContent}
-              </Link>
-            ) : (
-              <div key={banner.id} className="flex-[0_0_100%] min-w-0">
-                {BannerContent}
+                {isLink ? (
+                  <Link href={banner.link!}>
+                    <div className="relative w-full cursor-pointer" style={{ aspectRatio: isMobile ? '1.5/1' : '2.5/1' }}>
+                      <img
+                        src={imageSrc}
+                        alt={banner.title}
+                        className="w-full h-full object-cover object-center"
+                      />
+                    </div>
+                  </Link>
+                ) : (
+                  <div className="relative w-full" style={{ aspectRatio: isMobile ? '1.5/1' : '2.5/1' }}>
+                    <img
+                      src={imageSrc}
+                      alt={banner.title}
+                      className="w-full h-full object-cover object-center"
+                    />
+                  </div>
+                )}
               </div>
             )
           })}

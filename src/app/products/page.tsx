@@ -167,7 +167,7 @@ function ProductsContent() {
                 <Filter className="h-5 w-5 text-[#743181]" />
                 <h2 className="text-lg font-semibold text-gray-900">Filter by Category</h2>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
                 {displayCategories.map((category) => {
                   const isactive = activeFilter === category.slug
                   return (

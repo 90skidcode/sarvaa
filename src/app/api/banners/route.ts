@@ -4,6 +4,8 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 
+export const dynamic = "force-dynamic";
+
 // GET all banners
 export async function GET() {
   try {
@@ -56,9 +58,9 @@ export async function POST(request: NextRequest) {
 
     if (desktopImageFile.type.startsWith("image/")) {
       try {
-        desktopFinalBuffer = await sharp(desktopOriginalBuffer)
+        desktopFinalBuffer = (await sharp(desktopOriginalBuffer)
           .webp({ quality: 80 })
-          .toBuffer();
+          .toBuffer()) as any;
         desktopExtension = ".webp";
       } catch (e) {
         console.warn("Desktop banner compression failed:", e);
@@ -79,9 +81,9 @@ export async function POST(request: NextRequest) {
 
       if (mobileImageFile.type.startsWith("image/")) {
         try {
-          mobileFinalBuffer = await sharp(mobileOriginalBuffer)
+          mobileFinalBuffer = (await sharp(mobileOriginalBuffer)
             .webp({ quality: 80 })
-            .toBuffer();
+            .toBuffer()) as any;
           mobileExtension = ".webp";
         } catch (e) {
           console.warn("Mobile banner compression failed:", e);

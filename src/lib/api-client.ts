@@ -4,10 +4,12 @@ const AUTH_KEYS = {
   admin: {
     user: "adminUser",
     token: "adminToken",
+    session: "cart_session_id", // Admin might not use it but keeps types consistent
   },
   customer: {
     user: "user",
     token: "authToken",
+    session: "cart_session_id",
   },
 };
 
@@ -87,6 +89,7 @@ export function logout() {
   const keys = getStorageKeys();
   localStorage.removeItem(keys.user);
   localStorage.removeItem(keys.token);
+  if (keys.session) localStorage.removeItem(keys.session);
 
   if (window.location.pathname.startsWith("/admin")) {
     window.location.href = "/admin/login";

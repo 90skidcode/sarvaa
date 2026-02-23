@@ -14,6 +14,7 @@ export function MobileMenu({ className }: MobileMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userName, setUserName] = useState('')
+  const [categories, setCategories] = useState<{ name: string, slug: string }[]>([])
 
   useEffect(() => {
     const checkAuth = () => {
@@ -24,7 +25,18 @@ export function MobileMenu({ className }: MobileMenuProps) {
         setUserName(user?.name || user?.email || 'User')
       }
     }
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch('/api/categories?activeOnly=true')
+        const data = await res.json()
+        setCategories(data.categories || [])
+      } catch (error) {
+        console.error('Error fetching categories:', error)
+      }
+    }
+
     checkAuth()
+    fetchCategories()
 
     // Listen for storage changes (login/logout from other tabs)
     globalThis.addEventListener('storage', checkAuth)
@@ -46,6 +58,8 @@ export function MobileMenu({ className }: MobileMenuProps) {
   const menuItems = [
     { label: 'Home', href: '/' },
     { label: 'Shop Sweets', href: '/products' },
+    { label: 'Bulk Orders', href: '/bulk-orders' },
+    { label: 'Custom Cakes', href: '/custom-cakes' },
     { label: 'About Us', href: '/about' },
     { label: 'Contact', href: '/contact' },
   ]
@@ -109,6 +123,28 @@ export function MobileMenu({ className }: MobileMenuProps) {
                   </Link>
                 ))}
               </nav>
+
+              {/* Categories Section */}
+              <div className="mt-8">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4 px-4">
+                  Shop by Category
+                </p>
+                <nav className="space-y-1 max-h-[250px] overflow-y-auto custom-scrollbar">
+                  {categories.map((category) => (
+                    <Link
+                      key={category.slug}
+                      href={`/products?category=${category.slug}`}
+                      onClick={() => setIsOpen(false)}
+                      className="block py-2 px-4 text-gray-600 hover:bg-purple-50 hover:text-[#743181] rounded-lg text-sm transition-colors"
+                    >
+                      {category.name}
+                    </Link>
+                  ))}
+                  {categories.length === 0 && (
+                    <p className="px-4 py-2 text-sm text-gray-400 italic">No categories found</p>
+                  )}
+                </nav>
+              </div>
 
               {/* Divider */}
               <div className="my-6 border-t border-gray-200" />

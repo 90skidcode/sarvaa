@@ -31,10 +31,11 @@ model User {
 
   orders    Order[]
   cartItems CartItem[]
-  coupon    Coupon?    @relation(fields: [couponId], references: [id])
+  wishlist  WishlistItem[]
+  coupon    Coupon?        @relation(fields: [couponId], references: [id])
   couponId  String?
   storeId   String?
-  store     Store?     @relation(fields: [storeId], references: [id])
+  store     Store?         @relation(fields: [storeId], references: [id])
 }
 
 model Category {
@@ -69,11 +70,12 @@ model Product {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  category   Category    @relation(fields: [categoryId], references: [id])
-  orderItems OrderItem[]
-  cartItems  CartItem[]
-  coupon     Coupon?     @relation(fields: [couponId], references: [id])
-  couponId   String?
+  category      Category       @relation(fields: [categoryId], references: [id])
+  orderItems    OrderItem[]
+  cartItems     CartItem[]
+  coupon        Coupon?        @relation(fields: [couponId], references: [id])
+  couponId      String?
+  wishlistItems WishlistItem[]
 }
 
 model Order {
@@ -232,4 +234,16 @@ model UserProfile {
   address     String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
 }

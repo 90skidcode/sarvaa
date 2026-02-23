@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { hash } from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -55,6 +56,26 @@ export async function PUT(request: NextRequest) {
           address,
         },
       });
+
+      // SYNC: Ensure a record also exists in the User table
+      await db.user.upsert({
+        where: { firebaseUid },
+        update: {
+          name,
+          email,
+          phone: phoneNumber.replace("+91", ""),
+          phoneNumber,
+        },
+        create: {
+          firebaseUid,
+          email: email || `${firebaseUid}@firebase.com`,
+          name: name || "User",
+          password: await hash(Math.random().toString(36), 10), // Dummy password
+          phoneNumber,
+          phone: phoneNumber.replace("+91", ""),
+          role: "customer",
+        },
+      });
     } else {
       // Create new profile for Firebase user
       profile = await db.userProfile.create({
@@ -65,6 +86,19 @@ export async function PUT(request: NextRequest) {
           name,
           email,
           address,
+        },
+      });
+
+      // SYNC: Create a corresponding record in the User table
+      await db.user.create({
+        data: {
+          firebaseUid,
+          email: email || `${firebaseUid}@firebase.com`,
+          name: name || "User",
+          password: await hash(Math.random().toString(36), 10), // Dummy password
+          phoneNumber,
+          phone: phoneNumber.replace("+91", ""),
+          role: "customer",
         },
       });
     }

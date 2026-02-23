@@ -21,6 +21,7 @@ export function Header() {
   const pathname = usePathname()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userName, setUserName] = useState('')
+  const [wishlistCount, setWishlistCount] = useState(0)
   
   useEffect(() => {
     const checkAuth = () => {
@@ -31,17 +32,41 @@ export function Header() {
         setUserName(user?.name || user?.email || 'User')
       }
     }
+    const fetchWishlistCount = async () => {
+      const user = getCurrentUser()
+      if (user?.id) {
+        try {
+          const res = await fetch(`/api/wishlist?userId=${user.id}`)
+          const data = await res.json()
+          setWishlistCount(data.wishlist?.length || 0)
+        } catch (error) {
+          console.error('Error fetching wishlist count:', error)
+        }
+      }
+    }
+
     checkAuth()
+    if (isAuthenticated()) fetchWishlistCount()
 
     // Listen for storage changes (login/logout from other tabs)
-    globalThis.addEventListener('storage', checkAuth)
+    globalThis.addEventListener('storage', () => {
+      checkAuth()
+      fetchWishlistCount()
+    })
     
     // Listen for custom user update event (profile changes in same tab)
-    globalThis.addEventListener('userUpdated', checkAuth)
+    globalThis.addEventListener('userUpdated', () => {
+      checkAuth()
+      fetchWishlistCount()
+    })
+
+    // Listen for wishlist updates
+    globalThis.addEventListener('wishlistUpdated', fetchWishlistCount)
     
     return () => {
       globalThis.removeEventListener('storage', checkAuth)
       globalThis.removeEventListener('userUpdated', checkAuth)
+      globalThis.removeEventListener('wishlistUpdated', fetchWishlistCount)
     }
   }, [])
   
@@ -90,7 +115,11 @@ export function Header() {
             <Link href="/wishlist">
               <Button variant="ghost" size="icon" className="relative">
                 <Heart className="h-5 w-5 text-gray-600" />
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#743181] text-white text-xs rounded-full flex items-center justify-center">0</span>
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#743181] text-white text-xs rounded-full flex items-center justify-center">
+                    {wishlistCount}
+                  </span>
+                )}
               </Button>
             </Link>
 
