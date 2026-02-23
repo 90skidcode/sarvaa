@@ -1,9 +1,12 @@
 'use client'
 
 import { ProductCard } from '@/components/ProductCard'
+import { ProductFilters } from '@/components/ProductFilters'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Filter, Search } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { LayoutGrid, List, Search, SlidersHorizontal } from 'lucide-react'
+import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useCallback, useEffect, useState } from 'react'
 
@@ -36,14 +39,17 @@ function ProductsContent() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   
-  const categoryParam = searchParams.get('category')
-  const searchQuery = searchParams.get('search')
+  // URL Params
+  const categoryParam = searchParams.get('category') || 'all'
+  const searchQuery = searchParams.get('search') || ''
+  const minPriceParam = Number(searchParams.get('minPrice')) || 0
+  const maxPriceParam = Number(searchParams.get('maxPrice')) || 5000
+  const sortByParam = searchParams.get('sortBy') || 'newest'
   
   const [categories, setCategories] = useState<Category[]>([])
-  const [allProducts, setAllProducts] = useState<Product[]>([])
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
+  const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeFilter, setActiveFilter] = useState(categoryParam || 'all')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   // Fetch categories on mount
   useEffect(() => {
@@ -51,9 +57,7 @@ function ProductsContent() {
       try {
         const response = await fetch('/api/categories?activeOnly=true')
         const data = await response.json()
-        if (data.categories) {
-          setCategories(data.categories)
-        }
+        if (data.categories) setCategories(data.categories)
       } catch (error) {
         console.error('Error fetching categories:', error)
       }
@@ -61,221 +65,219 @@ function ProductsContent() {
     fetchCategories()
   }, [])
 
-  // Sync activeFilter with URL parameter
-  useEffect(() => {
-    setActiveFilter(categoryParam || 'all')
-  }, [categoryParam])
-
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true)
-      const url = activeFilter === 'all' 
-        ? '/api/products'
-        : `/api/products?category=${activeFilter}`
+      const params = new URLSearchParams()
+      if (categoryParam !== 'all') params.set('category', categoryParam)
+      if (searchQuery) params.set('search', searchQuery)
+      if (minPriceParam > 0) params.set('minPrice', minPriceParam.toString())
+      if (maxPriceParam < 5000) params.set('maxPrice', maxPriceParam.toString())
+      params.set('sortBy', sortByParam)
       
-      const response = await fetch(url)
+      const response = await fetch(`/api/products?${params.toString()}`)
       const data = await response.json()
-      setAllProducts(data.products || [])
+      setProducts(data.products || [])
     } catch (error) {
       console.error('Error fetching products:', error)
     } finally {
       setLoading(false)
     }
-  }, [activeFilter])
+  }, [categoryParam, searchQuery, minPriceParam, maxPriceParam, sortByParam])
 
   useEffect(() => {
     fetchProducts()
   }, [fetchProducts])
 
-  useEffect(() => {
-    // Apply search filter on the allProducts we just fetched
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      const filtered = allProducts.filter(product => 
-        product.name.toLowerCase().includes(query) ||
-        product.description.toLowerCase().includes(query) ||
-        product.category.name.toLowerCase().includes(query)
-      )
-      setFilteredProducts(filtered)
-    } else {
-      setFilteredProducts(allProducts)
-    }
-  }, [searchQuery, allProducts])
-
-  const handleFilterChange = (categorySlug: string) => {
+  const updateParams = (updates: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams.toString())
-    if (categorySlug === 'all') {
-      params.delete('category')
-    } else {
-      params.set('category', categorySlug)
-    }
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === 'all' || (key === 'minPrice' && value === '0') || (key === 'maxPrice' && value === '5000')) {
+        params.delete(key)
+      } else {
+        params.set(key, value)
+      }
+    })
     router.push(`${pathname}?${params.toString()}`)
   }
 
-  const products = filteredProducts
-
-  // Prepare categories for display including 'All'
-  const displayCategories = [
-    { name: 'All', slug: 'all' },
-    ...categories
-  ]
-
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Tamil Sweets Collection</h1>
-          <p className="text-lg text-gray-600">
-            Discover our authentic Tamil Nadu sweets, handcrafted with pure ghee and traditional recipes
-          </p>
-        </div>
+    <div className="min-h-screen bg-[#F9FAFB] py-4 sm:py-8">
+      <div className="container mx-auto px-4 max-w-7xl">
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6">
+          <Link href="/" className="hover:text-[#743181] transition-colors">Home</Link>
+          <span>/</span>
+          <span className="text-gray-900 font-medium">Products</span>
+        </nav>
 
-        {/* Search and Filters Combined */}
-        <div className="mb-8 bg-white rounded-lg p-6 shadow-sm">
-          <div className="grid lg:grid-cols-2 gap-8">
-            {/* Search Box - Left Side */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Search className="h-5 w-5 text-[#743181]" />
-                <h2 className="text-lg font-semibold text-gray-900">Search Products</h2>
-              </div>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchQuery || ''}
-                  onChange={(e) => {
-                    const query = e.target.value
-                    const params = new URLSearchParams(searchParams.toString())
-                    if (query) {
-                      params.set('search', query)
-                    } else {
-                      params.delete('search')
-                    }
-                    router.push(`${pathname}?${params.toString()}`)
-                  }}
-                  placeholder="Search by name, description..."
-                  className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#743181] focus:border-transparent text-base"
-                />
-              </div>
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar - Desktop */}
+          <aside className="hidden lg:block w-[280px] shrink-0">
+            <div className="sticky top-24 bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+              <ProductFilters 
+                categories={categories}
+                activeCategory={categoryParam}
+                onCategoryChange={(slug) => updateParams({ category: slug })}
+                priceRange={[minPriceParam, maxPriceParam]}
+                onPriceChange={(range) => updateParams({ minPrice: range[0].toString(), maxPrice: range[1].toString() })}
+                minMaxPrice={[0, 5000]}
+              />
             </div>
+          </aside>
 
-            {/* Category Filters - Right Side */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Filter className="h-5 w-5 text-[#743181]" />
-                <h2 className="text-lg font-semibold text-gray-900">Filter by Category</h2>
-              </div>
-              <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
-                {displayCategories.map((category) => {
-                  const isactive = activeFilter === category.slug
-                  return (
-                    <Button
-                      key={`filter-${category.slug}`}
-                      variant={isactive ? 'default' : 'outline'}
-                      onClick={() => handleFilterChange(category.slug)}
-                      size="sm"
-                      className={
-                        isactive
-                          ? 'bg-gradient-to-r from-[#743181] to-[#5a2a6e] text-white'
-                          : 'border-gray-300 text-gray-700 hover:border-[#743181] hover:text-[#743181]'
-                      }
+          {/* Main Content */}
+          <main className="flex-1">
+            {/* Header / Active Filters */}
+            <div className="mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+                <div>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
+                    {products.length} result{products.length !== 1 ? 's' : ''} for {categoryParam === 'all' ? 'All Sweets' : categoryParam}
+                  </h1>
+                </div>
+
+                <div className="flex items-center gap-2 sm:gap-4">
+                  {/* View Switcher */}
+                  <div className="hidden sm:flex items-center bg-white rounded-lg p-1 border border-gray-100 shadow-sm">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => setViewMode('grid')}
+                      className={`h-8 w-8 rounded-md ${viewMode === 'grid' ? 'bg-gray-100 text-[#743181]' : 'text-gray-400'}`}
                     >
-                      {category.name}
+                      <LayoutGrid className="h-4 w-4" />
                     </Button>
-                  )
-                })}
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => setViewMode('list')}
+                      className={`h-8 w-8 rounded-md ${viewMode === 'list' ? 'bg-gray-100 text-[#743181]' : 'text-gray-400'}`}
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  {/* Sort Dropdown */}
+                  <div className="flex-1 sm:flex-none flex items-center gap-2">
+                    <span className="hidden sm:inline text-sm text-gray-500">Sort by:</span>
+                    <Select value={sortByParam} onValueChange={(val) => updateParams({ sortBy: val })}>
+                      <SelectTrigger className="w-full sm:w-[160px] bg-white border-gray-100 shadow-sm focus:ring-[#743181]">
+                        <SelectValue placeholder="Sort by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="newest">Newest First</SelectItem>
+                        <SelectItem value="popularity">Popularity</SelectItem>
+                        <SelectItem value="price_asc">Price: Low to High</SelectItem>
+                        <SelectItem value="price_desc">Price: High to Low</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Mobile Filters Toggle */}
+                  <Button variant="outline" className="lg:hidden h-10 border-gray-100 shadow-sm gap-2">
+                    <SlidersHorizontal className="h-4 w-4" />
+                    Filters
+                  </Button>
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Search Results Banner */}
-        {searchQuery && (
-          <div className="mb-6 bg-purple-50 border border-purple-200 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Search className="h-5 w-5 text-[#743181]" />
-                <p className="text-gray-900">
-                  Search results for: <span className="font-semibold text-[#743181]">"{searchQuery}"</span>
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  const params = new URLSearchParams(searchParams.toString())
-                  params.delete('search')
-                  router.push(`${pathname}?${params.toString()}`)
-                }}
-                className="text-sm text-gray-600 hover:text-[#743181] underline"
-              >
-                Clear search
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Products Grid */}
-        {loading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={`product-skeleton-${i+1}`} className="bg-white rounded-lg h-96 animate-pulse" />
-            ))}
-          </div>
-        )}
-
-        {!loading && products.length === 0 && (
-          <div className="text-center py-16">
-            <p className="text-xl text-gray-600">No products found in this category.</p>
-          </div>
-        )}
-
-        {!loading && products.length > 0 && (
-          <>
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-gray-600">
-                Showing <span className="font-semibold">{products.length}</span> products
-              </p>
-              {activeFilter !== 'all' && (
-                <Badge variant="outline" className="text-[#743181] border-[#743181]">
-                  {displayCategories.find((c) => c.slug === activeFilter)?.name}
-                </Badge>
+              {/* Active Filter Badges */}
+              {(categoryParam !== 'all' || minPriceParam > 0 || maxPriceParam < 5000 || searchQuery) && (
+                <div className="flex flex-wrap gap-2 items-center mb-6">
+                  <span className="text-sm font-medium text-gray-500 mr-2">Active filters:</span>
+                  {categoryParam !== 'all' && (
+                    <Badge variant="secondary" className="bg-purple-50 text-[#743181] border-purple-100 hover:bg-purple-100 px-3 py-1 gap-1">
+                      Category: {categories.find(c => c.slug === categoryParam)?.name}
+                      <button onClick={() => updateParams({ category: 'all' })} className="ml-1 hover:text-red-500">×</button>
+                    </Badge>
+                  )}
+                  {(minPriceParam > 0 || maxPriceParam < 5000) && (
+                    <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100 px-3 py-1 gap-1">
+                      Price: ₹{minPriceParam} - ₹{maxPriceParam}
+                      <button onClick={() => updateParams({ minPrice: null, maxPrice: null })} className="ml-1 hover:text-red-500">×</button>
+                    </Badge>
+                  )}
+                  {searchQuery && (
+                    <Badge variant="secondary" className="bg-orange-50 text-orange-700 border-orange-100 hover:bg-orange-100 px-3 py-1 gap-1">
+                      Search: "{searchQuery}"
+                      <button onClick={() => updateParams({ search: null })} className="ml-1 hover:text-red-500">×</button>
+                    </Badge>
+                  )}
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => router.push(pathname)}
+                    className="text-gray-500 hover:text-red-500 h-8 px-2 text-xs font-semibold uppercase tracking-wider"
+                  >
+                    Clear All
+                  </Button>
+                </div>
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-               {products.map((product) => {
-                // Parse additional images
-                let additionalImages: string[] = []
-                if (product.images) {
-                  try {
-                    additionalImages = JSON.parse(product.images)
-                  } catch (e) {
-                    console.error('Error parsing product images:', e)
+            {/* Products Grid */}
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8">
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <div key={`product-skeleton-${i+1}`} className="bg-white rounded-2xl h-[420px] animate-pulse shadow-sm border border-gray-50" />
+                ))}
+              </div>
+            ) : products.length === 0 ? (
+              <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
+                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search className="h-8 w-8 text-gray-300" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">No products found</h3>
+                <p className="text-gray-500 max-w-sm mx-auto">
+                  Try adjusting your filters or search criteria to find what you're looking for.
+                </p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => router.push(pathname)}
+                  className="mt-6 border-gray-200"
+                >
+                  Reset all filters
+                </Button>
+              </div>
+            ) : (
+              <div className={viewMode === 'grid' 
+                ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8" 
+                : "flex flex-col gap-6"
+              }>
+                {products.map((product) => {
+                  let additionalImages: string[] = []
+                  if (product.images) {
+                    try {
+                      additionalImages = JSON.parse(product.images)
+                    } catch (e) {
+                      console.error('Error parsing product images:', e)
+                    }
                   }
-                }
 
-                return (
-                <ProductCard
-                  key={product.id}
-                  id={product.id}
-                  slug={product.slug}
-                  name={product.name}
-                  description={product.description}
-                  price={product.price}
-                  image={product.image}
-                  images={additionalImages}
-                  stock={product.stock}
-                  weights={product.weights}
-                  badge={product.featured ? 'Bestseller' : undefined}
-                  rating={4.8}
-                  reviews={Math.floor(Math.random() * 500) + 100}
-                />
-                )
-              })}
-            </div>
-          </>
-        )}
+                  return (
+                    <ProductCard
+                      key={product.id}
+                      id={product.id}
+                      slug={product.slug}
+                      name={product.name}
+                      description={product.description}
+                      price={product.price}
+                      image={product.image}
+                      images={additionalImages}
+                      stock={product.stock}
+                      weights={product.weights}
+                      badge={product.featured ? 'New Arrival' : undefined}
+                      rating={4.8}
+                      reviews={Math.floor(Math.random() * 500) + 100}
+                      viewMode={viewMode}
+                    />
+                  )
+                })}
+              </div>
+            )}
+          </main>
+        </div>
       </div>
     </div>
   )
@@ -292,4 +294,3 @@ export default function ProductsPage() {
     </Suspense>
   )
 }
-

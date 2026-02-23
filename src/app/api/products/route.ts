@@ -8,11 +8,23 @@ export async function GET(request: NextRequest) {
     const featured = searchParams.get("featured");
     const search = searchParams.get("search");
     const activeOnly = searchParams.get("activeOnly");
+    const minPrice = Number.parseFloat(searchParams.get("minPrice") || "0");
+    const maxPrice = Number.parseFloat(
+      searchParams.get("maxPrice") || "1000000",
+    );
+    const sortBy = searchParams.get("sortBy") || "newest";
+
     const page = Number.parseInt(searchParams.get("page") || "1");
-    const limit = Number.parseInt(searchParams.get("limit") || "10");
+    const limit = Number.parseInt(searchParams.get("limit") || "12");
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: any = {
+      isActive: activeOnly === "false" ? undefined : true,
+      price: {
+        gte: minPrice,
+        lte: maxPrice,
+      },
+    };
 
     if (categoryQuery) {
       where.category = {
@@ -26,14 +38,16 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       where.OR = [
-        { name: { contains: search } },
-        { description: { contains: search } },
+        { name: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
       ];
     }
 
-    if (activeOnly === "true") {
-      where.isActive = true;
-    }
+    // Prepare ordering
+    let orderBy: any = { createdAt: "desc" };
+    if (sortBy === "price_asc") orderBy = { price: "asc" };
+    if (sortBy === "price_desc") orderBy = { price: "desc" };
+    if (sortBy === "popularity") orderBy = { featured: "desc" };
 
     const [products, total] = await Promise.all([
       prisma.product.findMany({
@@ -43,9 +57,7 @@ export async function GET(request: NextRequest) {
         include: {
           category: true,
         },
-        orderBy: {
-          createdAt: "desc",
-        },
+        orderBy,
       }),
       prisma.product.count({ where }),
     ]);
