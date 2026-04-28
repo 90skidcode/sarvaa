@@ -197,20 +197,7 @@ export default function AdminLayout({
                 </div>
               ))}
 
-              <div className="mt-10 pt-10 border-t border-gray-100/80">
-                <div className="bg-gradient-to-br from-[#743181] via-[#B86E9F] to-[#662525] rounded-[2rem] p-6 text-white shadow-2xl shadow-purple-200/50 relative overflow-hidden group">
-                  <div className="relative z-10">
-                    <p className="text-[10px] font-black text-white/70 uppercase tracking-[0.2em] mb-1">Sarvaa OS</p>
-                    <p className="text-[13px] font-semibold mb-4 leading-snug">Everything is running smoothly today.</p>
-                    <Button size="sm" className="w-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md text-white text-[11px] font-black rounded-xl transition-all">
-                      GET ASSISTANCE
-                    </Button>
-                  </div>
-                  <div className="absolute -bottom-8 -right-8 opacity-10 group-hover:opacity-20 transition-opacity duration-500">
-                    <Cake className="h-32 w-32 rotate-12" />
-                  </div>
-                </div>
-              </div>
+             
             </nav>
           </aside>
 
