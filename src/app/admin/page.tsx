@@ -81,54 +81,54 @@ export default function AdminDashboard() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="border-none shadow-sm bg-gradient-to-br from-white to-purple-50">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-4">
             <CardTitle className="text-sm font-medium text-gray-600">Total Orders</CardTitle>
             <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
               <ShoppingBag className="h-4 w-4" />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <div className="text-3xl font-bold">{stats.totalOrders}</div>
-            <p className="text-xs text-green-600 mt-1 font-medium">+12% from last month</p>
+            <p className="text-xs text-green-600 mt-2 font-medium">+12% from last month</p>
           </CardContent>
         </Card>
 
         <Card className="border-none shadow-sm bg-gradient-to-br from-white to-green-50">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-4">
             <CardTitle className="text-sm font-medium text-gray-600">Total Revenue</CardTitle>
             <div className="p-2 bg-green-100 rounded-lg text-green-600">
               <DollarSign className="h-4 w-4" />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <div className="text-3xl font-bold">₹{stats.totalRevenue.toLocaleString()}</div>
-            <p className="text-xs text-green-600 mt-1 font-medium">+8% from last month</p>
+            <p className="text-xs text-green-600 mt-2 font-medium">+8% from last month</p>
           </CardContent>
         </Card>
 
         <Card className="border-none shadow-sm bg-gradient-to-br from-white to-blue-50">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-4">
             <CardTitle className="text-sm font-medium text-gray-600">Active Products</CardTitle>
             <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
               <Package className="h-4 w-4" />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <div className="text-3xl font-bold">{stats.totalProducts}</div>
-            <p className="text-xs text-gray-500 mt-1">In your catalog</p>
+            <p className="text-xs text-gray-500 mt-2">In your catalog</p>
           </CardContent>
         </Card>
 
         <Card className="border-none shadow-sm bg-gradient-to-br from-white to-pink-50">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-4">
             <CardTitle className="text-sm font-medium text-gray-600">Total Users</CardTitle>
             <div className="p-2 bg-pink-100 rounded-lg text-pink-600">
               <Users className="h-4 w-4" />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <div className="text-3xl font-bold">{stats.totalUsers}</div>
-            <p className="text-xs text-gray-500 mt-1">Registered accounts</p>
+            <p className="text-xs text-gray-500 mt-2">Registered accounts</p>
           </CardContent>
         </Card>
       </div>

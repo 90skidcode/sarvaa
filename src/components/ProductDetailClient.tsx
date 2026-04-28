@@ -2,10 +2,10 @@
 
 import { QuantityControl } from '@/components/QuantityControl'
 import { Button } from '@/components/ui/button'
+import { ImageWithFallback } from '@/components/ImageWithFallback'
 import { WeightOption, WeightSelector } from '@/components/WeightSelector'
 import { useCartStore } from '@/lib/store'
 import { ChevronLeft, ChevronRight, Heart, Share2, ShoppingCart, Star } from 'lucide-react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
@@ -138,13 +138,10 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           <div className="space-y-4">
             {/* Main Image with Slider */}
             <div className="relative aspect-square rounded-3xl overflow-hidden bg-white shadow-lg group">
-              <Image
+              <ImageWithFallback
                 src={product.images[currentImageIndex]}
                 alt={`${product.name} - Image ${currentImageIndex + 1}`}
-                fill
                 className="object-cover"
-                priority
-                sizes="(max-width: 1024px) 100vw, 50vw"
               />
               
               {/* Navigation Arrows */}
@@ -188,12 +185,10 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                         : 'ring-2 ring-gray-200 hover:ring-purple-300'
                     }`}
                   >
-                    <Image
+                    <ImageWithFallback
                       src={image}
                       alt={`Thumbnail ${index + 1}`}
-                      fill
                       className="object-cover"
-                      sizes="150px"
                     />
                   </button>
                 ))}

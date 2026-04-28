@@ -367,14 +367,7 @@ export default function EditProductPage() {
                   <Label className="text-gray-600 font-bold ml-1">Product Name</Label>
                   <Input
                     value={formData.name}
-                    onChange={(e) => {
-                      const name = e.target.value
-                      setFormData({
-                        ...formData,
-                        name,
-                        slug: name.toLowerCase().replaceAll(/\s+/g, '-').replaceAll(/[^a-z0-9-]/g, '')
-                      })
-                    }}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="rounded-xl border-gray-100"
                     required
                   />

@@ -46,6 +46,8 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
   if (response.status === 401) {
     localStorage.removeItem(keys.user);
     localStorage.removeItem(keys.token);
+    // Clear cart on session expiry
+    localStorage.removeItem("cart-storage");
 
     // Redirect based on current context
     if (window.location.pathname.startsWith("/admin")) {
@@ -90,6 +92,9 @@ export function logout() {
   localStorage.removeItem(keys.user);
   localStorage.removeItem(keys.token);
   if (keys.session) localStorage.removeItem(keys.session);
+
+  // Clear cart data from localStorage
+  localStorage.removeItem("cart-storage");
 
   if (window.location.pathname.startsWith("/admin")) {
     window.location.href = "/admin/login";

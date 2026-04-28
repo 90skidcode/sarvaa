@@ -247,3 +247,24 @@ model WishlistItem {
 
   @@unique([userId, productId])
 }
+
+model ContactInfo {
+  id           String   @id @default(cuid())
+  phoneNumber  String
+  whatsappNumber String?
+  email        String
+  address      String
+  city         String
+  postalCode   String
+  state        String
+  country      String
+  latitude     String?
+  longitude    String?
+  hoursMonSat  String   @default("9:00 AM - 8:00 PM")
+  hoursSunday  String   @default("10:00 AM - 6:00 PM")
+  responseTime String   @default("24 hours")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([id])
+}

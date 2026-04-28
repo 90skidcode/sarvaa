@@ -3,14 +3,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
+import { z } from "zod";
+
+const bannerSchema = z.object({
+  title: z.string().min(2, "Banner title must be at least 2 characters").max(200, "Banner title must be at most 200 characters"),
+  link: z.string().url("Link must be a valid URL").optional().nullable(),
+  displayOrder: z.coerce.number().int().nonnegative("Display order cannot be negative").optional()
+});
 
 export const dynamic = "force-dynamic";
 
 // GET all banners
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Check if this is an admin request
+    const { searchParams } = new URL(request.url);
+    const isAdmin = searchParams.get("admin") === "true";
+
     const banners = await prisma.banner.findMany({
-      where: { isActive: true },
+      where: isAdmin ? {} : { isActive: true },
       orderBy: { displayOrder: "asc" },
     });
     return NextResponse.json({ banners });
@@ -30,13 +41,27 @@ export async function POST(request: NextRequest) {
 
     const title = formData.get("title") as string;
     const link = formData.get("link") as string | null;
-    const displayOrder =
-      Number.parseInt(formData.get("displayOrder") as string) || 0;
+    const displayOrder = Number.parseInt(formData.get("displayOrder") as string) || 0;
     const desktopImageFile = formData.get("desktopImage") as File | null;
     const mobileImageFile = formData.get("mobileImage") as File | null;
 
-    if (!title) {
-      return NextResponse.json({ error: "Title is required" }, { status: 400 });
+    // Validate input
+    try {
+      bannerSchema.parse({
+        title,
+        link,
+        displayOrder
+      });
+    } catch (validationError) {
+      if (validationError instanceof z.ZodError) {
+        return NextResponse.json(
+          {
+            error: "Validation failed",
+            details: validationError.issues.map((e: any) => ({ field: e.path.join('.'), message: e.message }))
+          },
+          { status: 400 }
+        );
+      }
     }
 
     if (!desktopImageFile) {
@@ -44,6 +69,40 @@ export async function POST(request: NextRequest) {
         { error: "Desktop image is required" },
         { status: 400 },
       );
+    }
+
+    // Validate image files
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB for banners
+    const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+    if (desktopImageFile.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: `Desktop image size must be less than 10MB (${(desktopImageFile.size / 1024 / 1024).toFixed(2)}MB)` },
+        { status: 400 },
+      );
+    }
+
+    if (!ALLOWED_TYPES.includes(desktopImageFile.type)) {
+      return NextResponse.json(
+        { error: `Invalid image format for desktop image. Allowed: JPEG, PNG, WebP` },
+        { status: 400 },
+      );
+    }
+
+    if (mobileImageFile && mobileImageFile.size > 0) {
+      if (mobileImageFile.size > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          { error: `Mobile image size must be less than 10MB (${(mobileImageFile.size / 1024 / 1024).toFixed(2)}MB)` },
+          { status: 400 },
+        );
+      }
+
+      if (!ALLOWED_TYPES.includes(mobileImageFile.type)) {
+        return NextResponse.json(
+          { error: `Invalid image format for mobile image. Allowed: JPEG, PNG, WebP` },
+          { status: 400 },
+        );
+      }
     }
 
     // Create banners directory if it doesn't exist
@@ -94,6 +153,20 @@ export async function POST(request: NextRequest) {
       const mobilePath = path.join(bannersDir, mobileFilename);
       await writeFile(mobilePath, mobileFinalBuffer);
       mobileImagePath = `/banners/${mobileFilename}`;
+    }
+
+    // Check for existing banner with same title
+    const existingBanner = await prisma.banner.findFirst({
+      where: {
+        title: { equals: title, mode: 'insensitive' }
+      }
+    });
+
+    if (existingBanner) {
+      return NextResponse.json(
+        { error: "A banner with this title already exists" },
+        { status: 409 },
+      );
     }
 
     // Create banner in database

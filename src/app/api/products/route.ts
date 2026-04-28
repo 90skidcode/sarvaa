@@ -1,5 +1,20 @@
 import { prisma } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+const productSchema = z.object({
+  name: z.string().min(2, "Product name must be at least 2 characters").max(200, "Product name must be at most 200 characters"),
+  slug: z.string().min(2, "Slug must be at least 2 characters").max(200, "Slug must be at most 200 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters").max(5000, "Description must be at most 5000 characters"),
+  price: z.coerce.number().positive("Price must be greater than 0"),
+  image: z.string().min(1, "Image is required"),
+  stock: z.coerce.number().int().nonnegative("Stock cannot be negative").optional(),
+  featured: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+  categoryId: z.string().min(1, "Category is required"),
+  weights: z.string().optional().nullable(),
+  images: z.string().optional().nullable()
+});
 
 export async function GET(request: NextRequest) {
   try {
@@ -83,45 +98,40 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const {
-      name,
-      slug,
-      description,
-      price,
-      image,
-      stock,
-      featured,
-      isActive,
-      categoryId,
-      weights,
-      images,
-    } = body;
 
-    if (!name || !slug || !description || !price || !image || !categoryId) {
+    // Validate input
+    const validatedData = productSchema.parse(body);
+
+    // Check for existing product with same name or slug
+    const existingProduct = await prisma.product.findFirst({
+      where: {
+        OR: [
+          { name: { equals: validatedData.name, mode: 'insensitive' } },
+          { slug: { equals: validatedData.slug, mode: 'insensitive' } }
+        ]
+      }
+    });
+
+    if (existingProduct) {
       return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 },
+        { error: "A product with this name or slug already exists" },
+        { status: 409 },
       );
     }
 
     const product = await prisma.product.create({
       data: {
-        name,
-        slug,
-        description,
-        price: Number.parseFloat(price),
-        image,
-        stock: Number.parseInt(stock) || 0,
-        featured: featured || false,
-        isActive: typeof isActive === "boolean" ? isActive : true,
-        weights: (function () {
-          if (!weights) return null;
-          return typeof weights === "string"
-            ? weights
-            : JSON.stringify(weights);
-        })(),
-        categoryId,
-        images,
+        name: validatedData.name,
+        slug: validatedData.slug,
+        description: validatedData.description,
+        price: validatedData.price,
+        image: validatedData.image,
+        stock: validatedData.stock || 0,
+        featured: validatedData.featured || false,
+        isActive: validatedData.isActive !== undefined ? validatedData.isActive : true,
+        weights: validatedData.weights || null,
+        categoryId: validatedData.categoryId,
+        images: validatedData.images || null,
       },
       include: {
         category: true,
@@ -130,6 +140,15 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ product }, { status: 201 });
   } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        {
+          error: "Validation failed",
+          details: error.issues.map((e: z.ZodIssue) => ({ field: e.path.join('.'), message: e.message }))
+        },
+        { status: 400 }
+      );
+    }
     console.error("Error creating product:", error);
     return NextResponse.json(
       {

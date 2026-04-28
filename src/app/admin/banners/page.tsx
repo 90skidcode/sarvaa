@@ -57,7 +57,7 @@ export default function AdminBannersPage() {
 
   const fetchBanners = async () => {
     try {
-      const response = await fetch('/api/banners')
+      const response = await fetch('/api/banners?admin=true')
       const data = await response.json()
       setBanners(data.banners || [])
     } catch (error) {
@@ -146,6 +146,9 @@ export default function AdminBannersPage() {
       })
 
       if (!response.ok) {
+        if (response.status === 409) {
+          throw new Error('A banner with this title already exists')
+        }
         throw new Error('Failed to save banner')
       }
 
@@ -154,7 +157,7 @@ export default function AdminBannersPage() {
       fetchBanners()
     } catch (error) {
       console.error('Error saving banner:', error)
-      toast.error('Failed to save banner')
+      toast.error(error instanceof Error ? error.message : 'Failed to save banner')
     } finally {
       setSubmitting(false)
     }

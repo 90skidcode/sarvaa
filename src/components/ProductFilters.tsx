@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Slider } from '@/components/ui/slider'
-import { Search } from 'lucide-react'
+import { Search, X, Plus } from 'lucide-react'
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
 interface Category {
@@ -21,6 +22,9 @@ interface ProductFiltersProps {
   priceRange: [number, number]
   onPriceChange: (range: [number, number]) => void
   minMaxPrice: [number, number]
+  canLoadMoreCategories?: boolean
+  onLoadMoreCategories?: () => void
+  loadingMoreCategories?: boolean
 }
 
 export function ProductFilters({
@@ -29,7 +33,10 @@ export function ProductFilters({
   onCategoryChange,
   priceRange,
   onPriceChange,
-  minMaxPrice
+  minMaxPrice,
+  canLoadMoreCategories,
+  onLoadMoreCategories,
+  loadingMoreCategories
 }: ProductFiltersProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [localPrice, setLocalPrice] = useState<number[]>(priceRange)
@@ -58,7 +65,14 @@ export function ProductFilters({
         {/* Categories Section */}
         <AccordionItem value="categories" className="border-b">
           <AccordionTrigger className="text-base font-semibold hover:no-underline">
-            Categories
+            <div className="flex items-center justify-between w-full">
+              <span>Categories</span>
+              <Link href="/admin/categories/new" className="no-underline">
+                <Button size="sm" variant="ghost" className="h-6 w-6 p-0 hover:bg-purple-50" title="Add new category">
+                  <Plus className="h-3 w-3 text-[#743181]" />
+                </Button>
+              </Link>
+            </div>
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-4">
             <div className="relative mb-4">
@@ -67,18 +81,27 @@ export function ProductFilters({
                 placeholder="Search category..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 bg-gray-50 border-none focus-visible:ring-1 focus-visible:ring-[#743181]"
+                className="pl-9 pr-9 bg-gray-50 border-none focus-visible:ring-1 focus-visible:ring-[#743181]"
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-label="Clear search"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
-            <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar mb-3">
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="cat-all" 
-                  checked={activeCategory === 'all'} 
+                <Checkbox
+                  id="cat-all"
+                  checked={activeCategory === 'all'}
                   onCheckedChange={() => onCategoryChange('all')}
                 />
-                <label 
-                  htmlFor="cat-all" 
+                <label
+                  htmlFor="cat-all"
                   className={`text-sm font-medium leading-none cursor-pointer ${activeCategory === 'all' ? 'text-gray-900' : 'text-gray-600'}`}
                 >
                   All Categories
@@ -86,13 +109,13 @@ export function ProductFilters({
               </div>
               {filteredCategories.map((category) => (
                 <div key={category.id} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`cat-${category.slug}`} 
+                  <Checkbox
+                    id={`cat-${category.slug}`}
                     checked={activeCategory === category.slug}
                     onCheckedChange={() => onCategoryChange(category.slug)}
                   />
-                  <label 
-                    htmlFor={`cat-${category.slug}`} 
+                  <label
+                    htmlFor={`cat-${category.slug}`}
                     className={`text-sm font-medium leading-none cursor-pointer ${activeCategory === category.slug ? 'text-gray-900' : 'text-gray-600'}`}
                   >
                     {category.name}
@@ -100,6 +123,17 @@ export function ProductFilters({
                 </div>
               ))}
             </div>
+            {canLoadMoreCategories && onLoadMoreCategories && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onLoadMoreCategories}
+                disabled={loadingMoreCategories}
+                className="w-full text-[#743181] hover:bg-purple-50"
+              >
+                {loadingMoreCategories ? 'Loading...' : 'Load More Categories'}
+              </Button>
+            )}
           </AccordionContent>
         </AccordionItem>
 

@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { getCurrentUser } from '@/lib/api-client'
-import { Cake, ClipboardList, ImageIcon, LayoutDashboard, Lock, LogOut, Package, Store, Tag, Users } from 'lucide-react'
+import { Cake, ClipboardList, ImageIcon, LayoutDashboard, Lock, LogOut, Package, Phone, Store, Tag, Users } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -40,11 +40,12 @@ export default function AdminLayout({
   }, [pathname, router])
 
   const handleLogout = () => {
-    // We can't use the shared logout() here easily if it redirects to /login by default
-    // and we want /admin/login. The api-client.ts logout() is now context-aware, 
-    // but let's be explicit and safe.
+    // Clear all admin session data
     localStorage.removeItem('adminUser')
     localStorage.removeItem('adminToken')
+    localStorage.removeItem('cart-storage')
+    localStorage.removeItem('cart_session_id')
+
     toast.success('Signed out successfully')
     router.push('/admin/login')
   }
@@ -94,6 +95,7 @@ export default function AdminLayout({
     {
       title: 'Configuration',
       items: [
+        { label: 'Contact Information', href: '/admin/contact-info', icon: Phone },
         { label: 'Staff Access', href: '/admin/users', icon: Lock },
         { label: 'Stores', href: '/admin/stores', icon: Store },
       ]

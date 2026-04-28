@@ -213,6 +213,8 @@ export default function NewProductPage() {
       if (response.ok) {
         toast.success('Product created successfully')
         router.push('/admin/products')
+      } else if (response.status === 409) {
+        toast.error('A product with this name or slug already exists')
       } else {
         toast.error('Failed to create product')
       }

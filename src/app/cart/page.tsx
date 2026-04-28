@@ -1,11 +1,11 @@
 'use client'
 
 import { QuantityControl } from '@/components/QuantityControl'
+import { ImageWithFallback } from '@/components/ImageWithFallback'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useCartStore } from '@/lib/store'
 import { ShoppingBag, Store, Trash2 } from 'lucide-react'
-import Image from 'next/image'
 import Link from 'next/link'
 
 export default function CartPage() {
@@ -47,12 +47,11 @@ export default function CartPage() {
               <Card key={item.id}>
                 <CardContent className="p-6">
                   <div className="flex gap-4">
-                    <div className="relative w-24 h-24 flex-shrink-0">
-                      <Image
+                    <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden">
+                      <ImageWithFallback
                         src={item.image}
                         alt={item.name}
-                        fill
-                        className="object-cover rounded-lg"
+                        className="w-full h-full object-cover"
                       />
                     </div>
 

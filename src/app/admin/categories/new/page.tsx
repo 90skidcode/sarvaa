@@ -83,6 +83,8 @@ export default function NewCategoryPage() {
       if (response.ok) {
         toast.success('Category created successfully')
         router.push('/admin/categories')
+      } else if (response.status === 409) {
+        toast.error('A category with this name or slug already exists')
       } else {
         toast.error('Failed to create category')
       }

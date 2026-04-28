@@ -70,8 +70,8 @@ export function Header() {
     }
   }, [])
   
-  // Hide header on checkout page and admin pages
-  if (pathname === '/checkout' || pathname.startsWith('/admin')) {
+  // Hide header on checkout, login pages and admin pages
+  if (pathname === '/checkout' || pathname === '/login' || pathname.startsWith('/admin')) {
     return null
   }
 

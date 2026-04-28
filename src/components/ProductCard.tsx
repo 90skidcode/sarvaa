@@ -1,13 +1,14 @@
 'use client'
 
 import { QuantityControl } from '@/components/QuantityControl'
+import { StarRating } from '@/components/StarRating'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { ImageWithFallback } from '@/components/ImageWithFallback'
 import { WeightOption, WeightSelector } from '@/components/WeightSelector'
 import { getCurrentUser, isAuthenticated } from '@/lib/api-client'
 import { useCartStore } from '@/lib/store'
 import { Heart, Loader2 } from 'lucide-react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
@@ -201,18 +202,16 @@ export function ProductCard({
       <Card className="group overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all duration-300 p-0">
         <CardContent className="p-0 flex flex-col sm:flex-row h-full">
           {/* Image Section - Left */}
-          <Link 
-            href={`/products/${slug}`} 
+          <Link
+            href={`/products/${slug}`}
             className="relative w-full sm:w-[240px] aspect-square sm:aspect-auto overflow-hidden block"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
-            <Image
+            <ImageWithFallback
               src={allImages[currentImageIndex]}
               alt={name}
-              fill
               className="object-cover transition-all duration-300 ease-out group-hover:scale-105"
-              sizes="(max-width: 640px) 100vw, 240px"
             />
             {badge && (
               <div className="absolute top-3 left-3 z-10">
@@ -232,21 +231,7 @@ export function ProductCard({
                     {name}
                   </h3>
                 </Link>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <svg
-                        key={i}
-                        className={`h-3.5 w-3.5 ${i < Math.floor(rating) ? 'text-yellow-400' : 'text-gray-200'}`}
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
-                  </div>
-                  <span className="text-xs font-medium text-gray-400">({reviews} reviews)</span>
-                </div>
+                <StarRating rating={rating} reviews={reviews} size="sm" />
               </div>
 
               <div className="flex items-center gap-3 self-start sm:self-center">
@@ -324,18 +309,16 @@ export function ProductCard({
     <Card className="group overflow-hidden rounded-3xl border-none bg-white shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full p-0 gap-0">
       <CardContent className="p-0 flex flex-col h-full">
         {/* Image Section */}
-        <Link 
-          href={`/products/${slug}`} 
+        <Link
+          href={`/products/${slug}`}
           className="relative aspect-square overflow-hidden rounded-t-3xl block"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          <Image
+          <ImageWithFallback
             src={allImages[currentImageIndex]}
             alt={name}
-            fill
             className="object-cover transition-all duration-300 ease-out group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           
@@ -389,21 +372,7 @@ export function ProductCard({
                 {name}
               </h3>
             </Link>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <svg
-                    key={i}
-                    className={`h-3.5 w-3.5 ${i < Math.floor(rating) ? 'text-yellow-400' : 'text-gray-200'}`}
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
-              </div>
-              <span className="text-[11px] font-medium text-gray-400">({reviews} reviews)</span>
-            </div>
+            <StarRating rating={rating} reviews={reviews} size="sm" />
           </div>
           
           {/* Description */}

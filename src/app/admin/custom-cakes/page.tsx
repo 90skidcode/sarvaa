@@ -3,6 +3,7 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { ImageWithFallback } from '@/components/ImageWithFallback'
 import { Input } from '@/components/ui/input'
 import {
     Table,
@@ -143,10 +144,10 @@ export default function AdminCustomCakesPage() {
           <Card className="lg:col-span-6 border-none shadow-[0_10px_40px_rgba(0,0,0,0.04)] rounded-[2rem] overflow-hidden bg-white">
             <div className="flex flex-col h-full">
               <div className="aspect-square relative bg-gray-50 group flex-grow">
-                <img 
-                  src={currentGalleryImage || selectedOrder.cakeImage} 
-                  alt="Cake Design" 
-                  className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-700" 
+                <ImageWithFallback
+                  src={currentGalleryImage || selectedOrder.cakeImage}
+                  alt="Cake Design"
+                  className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-700"
                 />
                 <div className="absolute top-6 right-6">
                   <Badge className={`${getStatusColor(selectedOrder.status)} text-[10px] font-black uppercase px-4 py-1.5 rounded-full border-none shadow-lg tracking-widest`}>
@@ -168,7 +169,7 @@ export default function AdminCustomCakesPage() {
                             currentGalleryImage === img ? 'border-[#743181] scale-110 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'
                           }`}
                         >
-                          <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
+                          <ImageWithFallback src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
                         </button>
                       ))}
                     </div>

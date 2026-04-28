@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Button } from './ui/button'
+import { Instagram, Facebook } from 'lucide-react'
 
 export function Footer() {
   const pathname = usePathname()
@@ -38,7 +38,7 @@ export function Footer() {
              <div className="w-24 h-1 bg-gradient-to-r from-[#743181] to-pink-400 mx-auto"></div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 text-gray-700">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 text-gray-700">
             <div>
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-100">
@@ -50,12 +50,14 @@ export function Footer() {
                 Authentic Tamil Nadu sweets made with pure ghee and centuries-old recipes. Preserving tradition, one sweet at a time.
               </p>
               <div className="flex gap-4">
-                {['facebook', 'instagram', 'twitter', 'youtube'].map((social) => (
-                  <Link key={social} href="#" className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center hover:bg-[#743181] hover:text-white transition-all">
-                    <span className="sr-only">{social}</span>
-                    <div className="w-5 h-5 bg-current opacity-70"></div>
-                  </Link>
-                ))}
+                <Link href="https://www.instagram.com/sarvaasweets/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center hover:bg-[#743181] hover:text-white transition-all">
+                  <Instagram className="w-5 h-5" />
+                  <span className="sr-only">Instagram</span>
+                </Link>
+                <Link href="https://www.facebook.com/sarvaasweets/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center hover:bg-[#743181] hover:text-white transition-all">
+                  <Facebook className="w-5 h-5" />
+                  <span className="sr-only">Facebook</span>
+                </Link>
               </div>
             </div>
 
@@ -79,18 +81,6 @@ export function Footer() {
               </ul>
             </div>
 
-            <div>
-              <h4 className="text-gray-900 font-bold text-lg mb-6">Newsletter</h4>
-              <p className="mb-4 text-gray-600">Get sweet updates and festive offers!</p>
-              <form className="flex gap-2">
-                <input
-                  type="email"
-                  placeholder="Your Email"
-                  className="bg-white border border-gray-200 rounded-lg px-4 py-2 flex-1 focus:ring-2 focus:ring-[#743181] outline-none"
-                />
-                <Button className="bg-[#743181] hover:bg-[#5a2a6e] text-white">Join</Button>
-              </form>
-            </div>
           </div>
 
           <div className="border-t border-gray-200 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">

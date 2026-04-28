@@ -13,7 +13,8 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { Camera, CheckCircle2, Loader2, Upload, X } from 'lucide-react'
+import { ArrowLeft, Camera, CheckCircle2, Loader2, Upload, X } from 'lucide-react'
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -119,8 +120,12 @@ export default function CustomCakesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fafafa] py-12 px-4 font-outfit">
+    <div className="min-h-screen bg-gray-50 py-12 px-4 font-outfit">
       <div className="max-w-5xl mx-auto">
+        <Link href="/" className="inline-flex items-center text-[#743181] hover:text-[#5a2a6e] mb-8 font-medium">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Home
+        </Link>
         <div className="text-center mb-16">
           <Badge className="mb-4 bg-purple-50 text-[#743181] hover:bg-purple-50 px-4 py-1.5 rounded-full border border-purple-100 font-black uppercase tracking-[0.2em] text-[10px]">
             Masterclass Confectionery
@@ -133,7 +138,7 @@ export default function CustomCakesPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
           {/* Inspiration Area */}
           <div className="lg:col-span-5 space-y-6">
             <Card className="border-none shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2rem] overflow-hidden bg-white">
@@ -183,7 +188,7 @@ export default function CustomCakesPage() {
 
           {/* Form Area */}
           <Card className="lg:col-span-7 border-none shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2rem] overflow-hidden bg-white">
-            <CardContent className="p-10">
+            <CardContent className="p-6 sm:p-8">
               <form onSubmit={handleSubmit} className="space-y-8">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">

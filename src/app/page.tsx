@@ -2,6 +2,7 @@
 
 import { CustomCakeSection } from '@/components/CustomCakeSection'
 import { HeroBannerSlider } from '@/components/HeroBannerSlider'
+import { ImageWithFallback } from '@/components/ImageWithFallback'
 import { ProductCard } from '@/components/ProductCard'
 import { Badge } from '@/components/ui/badge'
 import { Award, ChevronRight, Clock, Star } from 'lucide-react'
@@ -108,10 +109,11 @@ export default function Home() {
             {!loading && categories.length > 0 && categories.map((category) => (
                 <Link key={category.id} href={`/products?category=${category.slug}`} className="group relative block transition-all hover:-translate-y-2">
                   <div className="relative aspect-square rounded-2xl overflow-hidden shadow-lg shadow-purple-200">
-                    <img
-                      src={category.image || 'https://images.unsplash.com/photo-1606858265218-4e4b7927c668?w=400&q=80'}
+                    <ImageWithFallback
+                      src={category.image}
                       alt={category.name}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      fallbackClassName="w-full h-full"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
                     <div className="absolute bottom-4 left-4 right-4">

@@ -50,20 +50,39 @@ function ProductsContent() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [categoryPage, setCategoryPage] = useState(1)
+  const [categoryTotalPages, setCategoryTotalPages] = useState(1)
+  const [loadingMoreCategories, setLoadingMoreCategories] = useState(false)
+
+  // Fetch categories with pagination
+  const fetchCategoriesPage = useCallback(async (page: number) => {
+    try {
+      if (page === 1) setLoadingMoreCategories(false)
+      else setLoadingMoreCategories(true)
+
+      const response = await fetch(`/api/categories?activeOnly=true&page=${page}&limit=10`)
+      const data = await response.json()
+
+      if (data.categories) {
+        if (page === 1) {
+          setCategories(data.categories)
+        } else {
+          setCategories(prev => [...prev, ...data.categories])
+        }
+        setCategoryPage(page)
+        setCategoryTotalPages(data.pagination?.totalPages || 1)
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error)
+    } finally {
+      setLoadingMoreCategories(false)
+    }
+  }, [])
 
   // Fetch categories on mount
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch('/api/categories?activeOnly=true')
-        const data = await response.json()
-        if (data.categories) setCategories(data.categories)
-      } catch (error) {
-        console.error('Error fetching categories:', error)
-      }
-    }
-    fetchCategories()
-  }, [])
+    fetchCategoriesPage(1)
+  }, [fetchCategoriesPage])
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -115,13 +134,16 @@ function ProductsContent() {
           {/* Sidebar - Desktop */}
           <aside className="hidden lg:block w-[280px] shrink-0">
             <div className="sticky top-24 bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-              <ProductFilters 
+              <ProductFilters
                 categories={categories}
                 activeCategory={categoryParam}
                 onCategoryChange={(slug) => updateParams({ category: slug })}
                 priceRange={[minPriceParam, maxPriceParam]}
                 onPriceChange={(range) => updateParams({ minPrice: range[0].toString(), maxPrice: range[1].toString() })}
                 minMaxPrice={[0, 5000]}
+                canLoadMoreCategories={categoryPage < categoryTotalPages}
+                onLoadMoreCategories={() => fetchCategoriesPage(categoryPage + 1)}
+                loadingMoreCategories={loadingMoreCategories}
               />
             </div>
           </aside>
