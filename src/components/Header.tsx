@@ -80,7 +80,7 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-md">
+    <header className="hidden sm:block sticky top-0 z-50 bg-white shadow-md">
       <div className="container mx-auto px-2 sm:px-4">
         <div className="flex items-center justify-between py-2 sm:py-4 gap-2">
           <Link href="/" className="flex items-center gap-1 sm:gap-3 group flex-shrink-0">
