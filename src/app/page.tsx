@@ -81,23 +81,23 @@ export default function Home() {
 
       {/* Transition to Featured Categories: Smooth Curve */}
       <div className="w-full overflow-hidden leading-[0] bg-white -mt-1">
-        <svg viewBox="0 0 1440 60" preserveAspectRatio="none" className="relative block w-full h-[30px] md:h-[50px] fill-gray-50" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 1440 60" preserveAspectRatio="none" className="relative block w-full h-[15px] sm:h-[30px] md:h-[50px] fill-gray-50" xmlns="http://www.w3.org/2000/svg">
           <path d="M0,32 C480,64 960,64 1440,32 L1440,60 L0,60 Z" />
         </svg>
       </div>
 
       {/* Featured Categories */}
-      <section className="py-20 bg-white relative">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
+      <section className="py-12 sm:py-20 bg-white relative">
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="text-center mb-8 sm:mb-16">
             <Badge className="mb-4 bg-purple-100 text-[#743181]">Special Collections</Badge>
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Our Sweet Collections</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">Our Sweet Collections</h2>
+            <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
               Explore the rich variety of Tamil sweets, from crispy treats to ghee-soaked delights
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-6">
             {loading && Array.from({ length: 6 }).map((_, i) => (
               <div key={`category-skeleton-${i+1}`} className="animate-pulse bg-purple-50 rounded-2xl p-4 h-48"></div>
             ))}
@@ -133,23 +133,23 @@ export default function Home() {
 
         {/* Transition to Featured Products: Scalloped Edge */}
         <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0] translate-y-[1px]">
-          <svg viewBox="0 0 1440 80" preserveAspectRatio="none" className="relative block w-full h-[40px] md:h-[60px] fill-gray-50" xmlns="http://www.w3.org/2000/svg">
+          <svg viewBox="0 0 1440 80" preserveAspectRatio="none" className="relative block w-full h-[20px] sm:h-[40px] md:h-[60px] fill-gray-50" xmlns="http://www.w3.org/2000/svg">
             <path d="M0,0 Q60,80 120,0 Q180,80 240,0 Q300,80 360,0 Q420,80 480,0 Q540,80 600,0 Q660,80 720,0 Q780,80 840,0 Q900,80 960,0 Q1020,80 1080,0 Q1140,80 1200,0 Q1260,80 1320,0 Q1380,80 1440,0 V80 H0 Z" />
           </svg>
         </div>
       </section>
 
       {/* Featured Products */}
-      <section className="py-24 bg-gray-50 relative">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-16">
+      <section className="py-12 sm:py-24 bg-gray-50 relative">
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-8 sm:mb-16">
             <div>
               <Badge className="mb-4 bg-pink-100 text-pink-700">Daily Specials</Badge>
-              <h2 className="text-4xl font-bold text-gray-900">Featured Delights</h2>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">Featured Delights</h2>
             </div>
-            <Link href="/products" className="group flex items-center text-[#743181] font-bold hover:text-[#5a2a6e] transition-colors mt-4 md:mt-0">
+            <Link href="/products" className="group flex items-center text-[#743181] font-bold hover:text-[#5a2a6e] transition-colors mt-4 md:mt-0 text-sm sm:text-base">
               View All Products
-              <ChevronRight className="ml-1 h-5 w-5 transform group-hover:translate-x-1 transition-transform" />
+              <ChevronRight className="ml-1 h-4 w-4 sm:h-5 sm:w-5 transform group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
 
@@ -196,7 +196,7 @@ export default function Home() {
 
         {/* Transition to Why Choose Us: Diagonal Tilt */}
         <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0]">
-          <svg viewBox="0 0 1440 100" preserveAspectRatio="none" className="relative block w-full h-[60px] md:h-[100px] fill-white" xmlns="http://www.w3.org/2000/svg">
+          <svg viewBox="0 0 1440 100" preserveAspectRatio="none" className="relative block w-full h-[30px] sm:h-[60px] md:h-[100px] fill-white" xmlns="http://www.w3.org/2000/svg">
             <path d="M0,100 L1440,0 L1440,100 L0,100 Z" />
           </svg>
         </div>

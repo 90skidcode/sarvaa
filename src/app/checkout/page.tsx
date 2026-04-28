@@ -222,21 +222,21 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
+      <div className="container mx-auto px-3 sm:px-4">
         {/* Header */}
-        <div className="mb-8">
-          <Link href="/cart" className="inline-flex items-center text-[#743181] hover:text-[#5a2a6e] font-medium mb-4">
+        <div className="mb-4 sm:mb-8">
+          <Link href="/cart" className="inline-flex items-center text-[#743181] hover:text-[#5a2a6e] font-medium mb-3 sm:mb-4 text-xs sm:text-base">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Cart
           </Link>
-          <h1 className="text-4xl font-bold text-gray-900">Checkout</h1>
-          <p className="text-gray-600 mt-2">Complete your order for store pickup</p>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">Checkout</h1>
+          <p className="text-gray-600 mt-1 sm:mt-2 text-xs sm:text-base">Complete your order for store pickup</p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid lg:grid-cols-3 gap-4 sm:gap-8">
           {/* Left Column - Forms */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Store Selection */}
             <Card className="border-none shadow-sm">
               <CardHeader>
@@ -245,19 +245,19 @@ export default function CheckoutPage() {
                   Select Store for Pickup
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-2 sm:space-y-3 p-4 sm:p-6">
                 {loadingStores ? (
-                  <div className="text-center py-12">
+                  <div className="text-center py-8 sm:py-12">
                       <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-200 border-t-purple-600 mx-auto"></div>
-                      <p className="mt-4 text-gray-500 font-medium">Loading stores...</p>
+                      <p className="mt-3 sm:mt-4 text-gray-500 font-medium text-sm">Loading stores...</p>
                   </div>
                 ) : stores.length === 0 ? (
-                  <div className="text-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                      <Store className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-                      <p className="text-gray-500">No stores available for selection</p>
+                  <div className="text-center py-8 sm:py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                      <Store className="h-8 sm:h-10 w-8 sm:w-10 text-gray-300 mx-auto mb-2" />
+                      <p className="text-gray-500 text-sm">No stores available for selection</p>
                   </div>
                 ) : (
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                       {stores.map((store) => (
                           <label
                           key={store.id}
@@ -299,10 +299,10 @@ export default function CheckoutPage() {
                   Contact Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label htmlFor="customer-name" className="block text-sm font-bold text-gray-700 ml-1">
+              <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <label htmlFor="customer-name" className="block text-xs sm:text-sm font-bold text-gray-700 ml-1">
                       Full Name *
                     </label>
                     <Input
@@ -311,12 +311,12 @@ export default function CheckoutPage() {
                       value={formData.name}
                       onChange={handleChange}
                       placeholder="e.g. Ramesh Kumar"
-                      className="rounded-xl border-gray-100 p-6"
+                      className="rounded-xl border-gray-100 p-3 sm:p-4 text-sm h-10 sm:h-12"
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <label htmlFor="customer-email" className="block text-sm font-bold text-gray-700 ml-1">
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <label htmlFor="customer-email" className="block text-xs sm:text-sm font-bold text-gray-700 ml-1">
                       Email Address
                     </label>
                     <Input
@@ -326,16 +326,16 @@ export default function CheckoutPage() {
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="you@email.com"
-                      className="rounded-xl border-gray-100 p-6"
+                      className="rounded-xl border-gray-100 p-3 sm:p-4 text-sm h-10 sm:h-12"
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <label htmlFor="customer-phone" className="block text-sm font-bold text-gray-700 ml-1">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <label htmlFor="customer-phone" className="block text-xs sm:text-sm font-bold text-gray-700 ml-1">
                     Phone Number *
                   </label>
-                  <div className="flex gap-3">
-                    <div className="flex items-center justify-center bg-gray-50 border border-gray-100 rounded-xl px-4 font-bold text-gray-500">
+                  <div className="flex gap-2 sm:gap-3">
+                    <div className="flex items-center justify-center bg-gray-50 border border-gray-100 rounded-xl px-2 sm:px-4 font-bold text-gray-500 text-xs sm:text-sm">
                         +91
                     </div>
                     <Input
@@ -346,11 +346,11 @@ export default function CheckoutPage() {
                       onChange={handleChange}
                       placeholder="9876543210"
                       maxLength={10}
-                      className="flex-1 rounded-xl border-gray-100 p-6"
+                      className="flex-1 rounded-xl border-gray-100 p-3 sm:p-4 text-sm h-10 sm:h-12"
                       required
                     />
                   </div>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider ml-1 mt-2">Used for order confirmation & pickup updates</p>
+                  <p className="text-[8px] sm:text-[10px] text-gray-400 font-bold uppercase tracking-wider ml-1 mt-1">Used for order confirmation & pickup updates</p>
                 </div>
               </CardContent>
             </Card>
@@ -359,15 +359,15 @@ export default function CheckoutPage() {
           {/* Right Column - Order Summary */}
           <div className="lg:col-span-1">
             <Card className="sticky top-4 border-none shadow-premium overflow-hidden">
-              <CardHeader className="bg-gray-50/80">
-                <CardTitle className="text-gray-900 font-black">Order Summary</CardTitle>
+              <CardHeader className="bg-gray-50/80 p-4 sm:p-6">
+                <CardTitle className="text-gray-900 font-black text-lg sm:text-xl">Order Summary</CardTitle>
               </CardHeader>
-              <CardContent className="p-6 space-y-6">
+              <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                 {/* Items */}
-                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                <div className="space-y-3 max-h-[300px] sm:max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                   {items.map((item) => (
-                    <div key={item.id} className="flex gap-4 group">
-                      <div className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-sm flex-shrink-0">
+                    <div key={item.id} className="flex gap-3 group">
+                      <div className="relative w-16 sm:w-20 h-16 sm:h-20 rounded-xl sm:rounded-2xl overflow-hidden shadow-sm flex-shrink-0">
                           <img
                             src={item.image}
                             alt={item.name}
@@ -377,12 +377,12 @@ export default function CheckoutPage() {
                             {item.quantity}x
                           </div>
                       </div>
-                      <div className="flex-1 py-1">
-                        <p className="font-bold text-gray-900 text-sm leading-tight mb-1">{item.name}</p>
-                        <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-2">
+                      <div className="flex-1 py-0.5">
+                        <p className="font-bold text-gray-900 text-xs sm:text-sm leading-tight mb-0.5">{item.name}</p>
+                        <p className="text-[8px] sm:text-[10px] font-black text-purple-400 uppercase tracking-widest mb-1">
                             {item.variantValue} {item.variantType === 'Default' ? '' : item.variantType}
                         </p>
-                        <p className="text-sm text-[#743181] font-black">
+                        <p className="text-xs sm:text-sm text-[#743181] font-black">
                           ₹{(item.quantity * item.price).toFixed(2)}
                         </p>
                       </div>
@@ -391,17 +391,17 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* Coupon Section */}
-                <div className="pt-6 border-t border-dashed border-gray-200 space-y-4">
-                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Promotional Code</p>
+                <div className="pt-4 sm:pt-6 border-t border-dashed border-gray-200 space-y-3 sm:space-y-4">
+                  <p className="text-[8px] sm:text-xs font-black text-gray-400 uppercase tracking-widest">Promotional Code</p>
                   {appliedCoupon ? (
-                    <div className="flex items-center justify-between bg-emerald-50 p-3 rounded-2xl border border-emerald-100 group">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-emerald-500 text-white rounded-xl shadow-sm">
-                            <CheckCircle2 className="h-4 w-4" />
+                    <div className="flex items-center justify-between bg-emerald-50 p-2 sm:p-3 rounded-xl sm:rounded-2xl border border-emerald-100 group gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1 sm:p-2 bg-emerald-500 text-white rounded-lg sm:rounded-xl shadow-sm">
+                            <CheckCircle2 className="h-3 sm:h-4 w-3 sm:w-4" />
                         </div>
                         <div>
-                          <p className="text-sm font-black text-emerald-700">{appliedCoupon.code}</p>
-                          <p className="text-[10px] text-emerald-600 font-bold">₹{discountAmount.toFixed(2)} saved</p>
+                          <p className="text-xs sm:text-sm font-black text-emerald-700">{appliedCoupon.code}</p>
+                          <p className="text-[8px] sm:text-[10px] text-emerald-600 font-bold">₹{discountAmount.toFixed(2)} saved</p>
                         </div>
                       </div>
                       <Button 
@@ -419,13 +419,13 @@ export default function CheckoutPage() {
                           value={couponCode}
                           onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                           placeholder="Enter code"
-                          className="rounded-xl border-gray-100 bg-gray-50/50"
+                          className="rounded-lg sm:rounded-xl border-gray-100 bg-gray-50/50 text-sm h-9 sm:h-10"
                         />
-                        <Button 
+                        <Button
                           variant="outline"
                           onClick={handleApplyCoupon}
                           disabled={isApplyingCoupon || !couponCode}
-                          className="rounded-xl border-purple-100 text-[#743181] hover:bg-purple-50 font-bold transition-all px-6"
+                          className="rounded-lg sm:rounded-xl border-purple-100 text-[#743181] hover:bg-purple-50 font-bold transition-all px-3 sm:px-6 text-xs sm:text-sm h-9 sm:h-10"
                         >
                           {isApplyingCoupon ? '...' : 'Apply'}
                         </Button>
@@ -433,56 +433,56 @@ export default function CheckoutPage() {
                   )}
                 </div>
 
-                <div className="pt-6 border-t border-dashed border-gray-200 space-y-3">
-                  <div className="flex justify-between text-sm font-medium">
+                <div className="pt-4 sm:pt-6 border-t border-dashed border-gray-200 space-y-2 sm:space-y-3">
+                  <div className="flex justify-between text-xs sm:text-sm font-medium">
                     <span className="text-gray-500">Items Subtotal</span>
                     <span className="text-gray-900">₹{cartTotal.toFixed(2)}</span>
                   </div>
-                  
+
                   {appliedCoupon && (
-                    <div className="flex justify-between text-sm font-medium">
+                    <div className="flex justify-between text-xs sm:text-sm font-medium">
                       <span className="text-emerald-600 font-bold">Coupon Discount</span>
                       <span className="text-emerald-600 font-black">-₹{discountAmount.toFixed(2)}</span>
                     </div>
                   )}
-                  
-                  <div className="flex justify-between text-sm font-medium">
+
+                  <div className="flex justify-between text-xs sm:text-sm font-medium">
                     <span className="text-gray-500 flex items-center gap-1">
-                      <Store className="h-4 w-4 opacity-50" />
+                      <Store className="h-3 sm:h-4 w-3 sm:w-4 opacity-50" />
                       Pickup
                     </span>
-                    <span className="text-emerald-600 font-black tracking-wider uppercase text-[10px]">Free</span>
+                    <span className="text-emerald-600 font-black tracking-wider uppercase text-[8px] sm:text-[10px]">Free</span>
                   </div>
                 </div>
 
-                <div className="pt-6 border-t-2 border-gray-100">
+                <div className="pt-4 sm:pt-6 border-t-2 border-gray-100">
                   <div className="flex justify-between items-end">
-                    <span className="text-gray-500 font-bold uppercase tracking-widest text-[10px] pb-1">Total Amount</span>
-                    <span className="text-3xl font-black text-[#743181]">₹{grandTotal.toFixed(2)}</span>
+                    <span className="text-gray-500 font-bold uppercase tracking-widest text-[8px] sm:text-[10px] pb-0.5">Total Amount</span>
+                    <span className="text-2xl sm:text-3xl font-black text-[#743181]">₹{grandTotal.toFixed(2)}</span>
                   </div>
                 </div>
 
                 <Button
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-[#743181] to-purple-600 hover:to-[#5a2a6e] text-white py-10 rounded-3xl shadow-xl shadow-purple-900/10 text-xl font-black tracking-tight transform transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-gradient-to-r from-[#743181] to-purple-600 hover:to-[#5a2a6e] text-white py-6 sm:py-10 rounded-2xl sm:rounded-3xl shadow-xl shadow-purple-900/10 text-base sm:text-lg font-black tracking-tight transform transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
-                    <div className="flex items-center gap-2">
-                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white"></div>
+                    <div className="flex items-center gap-2 text-sm">
+                        <div className="animate-spin rounded-full h-4 sm:h-5 w-4 sm:w-5 border-2 border-white/30 border-t-white"></div>
                         Processing...
                     </div>
                   ) : (
                     <>
-                      <CheckCircle2 className="h-6 w-6 mr-2" />
+                      <CheckCircle2 className="h-5 sm:h-6 w-5 sm:w-6 mr-2" />
                       Place Order
                     </>
                   )}
                 </Button>
 
-                <div className="bg-gray-50 p-4 rounded-2xl flex items-center justify-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Secure Premium Checkout</span>
+                <div className="bg-gray-50 p-3 sm:p-4 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2">
+                    <CheckCircle2 className="h-3 sm:h-4 w-3 sm:w-4 text-emerald-500 flex-shrink-0" />
+                    <span className="text-[8px] sm:text-[10px] font-bold text-gray-500 uppercase tracking-widest">Secure Premium Checkout</span>
                 </div>
               </CardContent>
             </Card>

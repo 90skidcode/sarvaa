@@ -81,36 +81,37 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-md">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between py-4">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative w-16 h-12 rounded-xl overflow-hidden shadow-sm group-hover:scale-105 transition-transform border border-gray-100">
+      <div className="container mx-auto px-2 sm:px-4">
+        <div className="flex items-center justify-between py-2 sm:py-4 gap-2">
+          <Link href="/" className="flex items-center gap-1 sm:gap-3 group flex-shrink-0">
+            <div className="relative w-12 h-10 sm:w-16 sm:h-12 rounded-lg sm:rounded-xl overflow-hidden shadow-sm group-hover:scale-105 transition-transform border border-gray-100">
               <img
                 src="/sarvaa-logo-full.jpg"
                 alt="Sarvaa Sweets Logo"
                 className="w-full h-full object-contain"
               />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-[#743181] tracking-tight">Sarvaa Sweets</h1>
-              <p className="text-xs text-gray-500 tracking-widest uppercase">Premium Confectionery</p>
+            <div className="hidden sm:block">
+              <h1 className="text-lg sm:text-2xl font-bold text-[#743181] tracking-tight">Sarvaa Sweets</h1>
             </div>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-8">
-            <Link href="/" className="text-gray-700 hover:text-[#743181] font-medium transition-colors relative group">
+          <nav className="hidden lg:flex items-center gap-4 lg:gap-8">
+            <Link href="/" className="text-gray-700 hover:text-[#743181] font-medium transition-colors relative group text-sm lg:text-base">
               Home<span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#743181] transition-all group-hover:w-full"></span>
             </Link>
-            <Link href="/products" className="text-gray-700 hover:text-[#743181] font-medium transition-colors relative group">
+            <Link href="/products" className="text-gray-700 hover:text-[#743181] font-medium transition-colors relative group text-sm lg:text-base">
               Shop Sweets<span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#743181] transition-all group-hover:w-full"></span>
             </Link>
-            <Link href="/contact" className="text-gray-700 hover:text-[#743181] font-medium transition-colors relative group">
+            <Link href="/contact" className="text-gray-700 hover:text-[#743181] font-medium transition-colors relative group text-sm lg:text-base">
               Contact<span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#743181] transition-all group-hover:w-full"></span>
             </Link>
           </nav>
 
-          <div className="flex items-center gap-4">
-            <SearchBar />
+          <div className="flex items-center gap-1 sm:gap-4 ml-auto">
+            <div className="hidden sm:block">
+              <SearchBar />
+            </div>
 
             <Link href="/wishlist">
               <Button variant="ghost" size="icon" className="relative">

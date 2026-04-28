@@ -135,8 +135,9 @@ export default function LoginPage() {
       
       // Extract phone number without country code
       const phoneWithoutCode = user.phoneNumber?.replace('+91', '') || ''
-      
-      // Try to fetch existing profile
+
+      // Fetch user from database to get the actual database ID
+      let databaseUserId = user.uid // Fallback to Firebase UID if not found
       let profileData = { name: '', email: '', address: '' }
       try {
         const response = await fetch('/api/profile', {
@@ -145,7 +146,9 @@ export default function LoginPage() {
           }
         })
         if (response.ok) {
-          const { profile } = await response.json()
+          const data = await response.json()
+          const profile = data.profile || data.user
+          databaseUserId = profile.id || user.uid // Use database ID if available
           profileData = {
             name: profile.name || '',
             email: profile.email || '',
@@ -158,8 +161,9 @@ export default function LoginPage() {
 
       // Store user info and token in localStorage
       localStorage.setItem('user', JSON.stringify({
-        id: user.uid,
+        id: databaseUserId,
         uid: user.uid,
+        firebaseUid: user.uid,
         phoneNumber: user.phoneNumber,
         phone: phoneWithoutCode,
         ...profileData,
@@ -199,54 +203,54 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 py-6 sm:py-12 px-3 sm:px-4">
       <div className="container mx-auto max-w-md">
         {/* Back Button */}
 
 
         {/* Main Card */}
         <Card className="shadow-2xl border-purple-100">
-          <CardHeader className="text-center pb-4">
+          <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
             {/* Logo */}
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden shadow-lg">
+            <div className="w-14 sm:w-20 h-14 sm:h-20 mx-auto mb-3 sm:mb-4 rounded-full overflow-hidden shadow-lg">
               <img
                 src="/images/sarvaa-logo-icon.jpg"
                 alt="Sarvaa Sweets"
                 className="w-full h-full object-cover"
               />
             </div>
-            <CardTitle className="text-3xl font-bold text-[#743181]">
+            <CardTitle className="text-2xl sm:text-3xl font-bold text-[#743181]">
               {step === 'phone' ? 'Login with OTP' : 'Verify OTP'}
             </CardTitle>
-            <p className="text-gray-600 mt-2">
-              {step === 'phone' 
-                ? 'Enter your mobile number to receive OTP' 
+            <p className="text-gray-600 mt-1.5 sm:mt-2 text-xs sm:text-base">
+              {step === 'phone'
+                ? 'Enter your mobile number to receive OTP'
                 : `OTP sent to +91${phoneNumber}`
               }
             </p>
-            <p className="text-sm text-gray-500 mt-1">தமிழ்நாட்டின் #1 இனிப்பு கடை</p>
+            <p className="text-[10px] sm:text-sm text-gray-500 mt-0.5 sm:mt-1">தமிழ்நாட்டின் #1 இனிப்பு கடை</p>
           </CardHeader>
 
-          <CardContent>
+          <CardContent className="p-4 sm:p-6">
             {step === 'phone' ? (
               /* Phone Number Form */
-              <form onSubmit={handleSendOTP} className="space-y-6">
+              <form onSubmit={handleSendOTP} className="space-y-4 sm:space-y-6">
                 <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="phone" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                     Mobile Number
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1.5 sm:gap-2">
                     {/* Country Code (Read-only) */}
                     <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <Phone className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 h-4 sm:h-5 w-4 sm:w-5 text-gray-400" />
                       <Input
                         type="text"
                         value="+91"
                         readOnly
-                        className="pl-10 w-20 bg-gray-100 text-gray-600 font-semibold"
+                        className="pl-7 sm:pl-10 w-16 sm:w-20 bg-gray-100 text-gray-600 font-semibold text-xs sm:text-base h-9 sm:h-10"
                       />
                     </div>
-                    
+
                     {/* Phone Number Input */}
                     <Input
                       id="phone"
@@ -256,7 +260,7 @@ export default function LoginPage() {
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
                       placeholder="9876543210"
-                      className="flex-1 text-lg"
+                      className="flex-1 text-sm sm:text-lg h-9 sm:h-10"
                       maxLength={10}
                       autoFocus
                     />
@@ -269,15 +273,15 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   disabled={loading || phoneNumber.length !== 10}
-                  className="w-full bg-gradient-to-r from-[#743181] to-[#5a2a6e] hover:from-[#5a2a6e] hover:to-[#743181] text-white py-6 text-lg"
+                  className="w-full bg-gradient-to-r from-[#743181] to-[#5a2a6e] hover:from-[#5a2a6e] hover:to-[#743181] text-white py-3 sm:py-6 text-sm sm:text-lg h-10 sm:h-12"
                 >
                   {loading ? 'Sending OTP...' : 'Send OTP'}
                 </Button>
 
                 {/* Info Box */}
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <p className="text-xs font-semibold text-blue-800 mb-2">📱 OTP Login Benefits:</p>
-                  <ul className="text-xs text-blue-700 space-y-1">
+                <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-[8px] sm:text-xs font-semibold text-blue-800 mb-1.5 sm:mb-2">📱 OTP Login Benefits:</p>
+                  <ul className="text-[8px] sm:text-xs text-blue-700 space-y-0.5 sm:space-y-1">
                     <li>✓ Quick & secure authentication</li>
                     <li>✓ No password to remember</li>
                     <li>✓ Instant account creation for new users</li>
@@ -286,14 +290,14 @@ export default function LoginPage() {
               </form>
             ) : (
               /* OTP Verification Form */
-              <form onSubmit={handleVerifyOTP} className="space-y-6">
+              <form onSubmit={handleVerifyOTP} className="space-y-4 sm:space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-4 text-center">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-4 text-center">
                     Enter 6-Digit OTP
                   </label>
-                  
+
                   {/* OTP Input Fields */}
-                  <div className="flex justify-center gap-2 mb-4">
+                  <div className="flex justify-center gap-1 sm:gap-2 mb-4">
                     {otp.map((digit, index) => (
                       <Input
                         key={index}
@@ -305,7 +309,7 @@ export default function LoginPage() {
                         onChange={(e) => handleOtpChange(index, e.target.value)}
                         onKeyDown={(e) => handleOtpKeyDown(index, e)}
                         onPaste={index === 0 ? handleOtpPaste : undefined}
-                        className="w-12 h-14 text-center text-2xl font-bold border-2 focus:border-[#743181]"
+                        className="w-9 sm:w-12 h-10 sm:h-14 text-center text-lg sm:text-2xl font-bold border-2 focus:border-[#743181] text-sm"
                       />
                     ))}
                   </div>
@@ -314,25 +318,25 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   disabled={loading || otp.join('').length !== 6}
-                  className="w-full bg-gradient-to-r from-[#743181] to-[#5a2a6e] hover:from-[#5a2a6e] hover:to-[#743181] text-white py-6 text-lg"
+                  className="w-full bg-gradient-to-r from-[#743181] to-[#5a2a6e] hover:from-[#5a2a6e] hover:to-[#743181] text-white py-3 sm:py-6 text-sm sm:text-lg h-10 sm:h-12"
                 >
                   {loading ? 'Verifying...' : 'Verify OTP'}
                 </Button>
 
                 {/* Resend OTP */}
                 <div className="text-center">
-                  <p className="text-sm text-gray-600 mb-2">Didn't receive the code?</p>
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1.5 sm:mb-2">Didn't receive the code?</p>
                   <button
                     type="button"
                     onClick={handleResendOTP}
-                    className="text-[#743181] font-semibold hover:underline text-sm"
+                    className="text-[#743181] font-semibold hover:underline text-xs sm:text-sm"
                   >
                     Resend OTP
                   </button>
                 </div>
 
                 {/* Change Number */}
-                <div className="text-center pt-2">
+                <div className="text-center pt-1 sm:pt-2">
                   <button
                     type="button"
                     onClick={() => {
@@ -340,7 +344,7 @@ export default function LoginPage() {
                       setOtp(['', '', '', '', '', ''])
                       setConfirmationResult(null)
                     }}
-                    className="text-gray-600 hover:text-[#743181] text-sm"
+                    className="text-gray-600 hover:text-[#743181] text-xs sm:text-sm"
                   >
                     Change mobile number
                   </button>
@@ -349,8 +353,8 @@ export default function LoginPage() {
             )}
 
             {/* Security Note */}
-            <div className="mt-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
-              <p className="text-xs text-center text-gray-600">
+            <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <p className="text-[8px] sm:text-xs text-center text-gray-600">
                 🔒 Secure authentication powered by Firebase
               </p>
             </div>
@@ -358,7 +362,7 @@ export default function LoginPage() {
         </Card>
 
         {/* Footer */}
-        <p className="text-center text-sm text-gray-500 mt-6">
+        <p className="text-center text-[8px] sm:text-sm text-gray-500 mt-4 sm:mt-6 px-2">
           By continuing, you agree to our{' '}
           <Link href="/terms" className="text-[#743181] hover:underline">Terms of Service</Link>
           {' '}and{' '}

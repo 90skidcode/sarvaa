@@ -122,7 +122,7 @@ function ProductsContent() {
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] py-4 sm:py-8">
-      <div className="container mx-auto px-4 max-w-7xl">
+      <div className="container mx-auto px-3 sm:px-4 max-w-7xl">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6">
           <Link href="/" className="hover:text-[#743181] transition-colors">Home</Link>
@@ -130,7 +130,7 @@ function ProductsContent() {
           <span className="text-gray-900 font-medium">Products</span>
         </nav>
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-8">
           {/* Sidebar - Desktop */}
           <aside className="hidden lg:block w-[280px] shrink-0">
             <div className="sticky top-24 bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
@@ -151,15 +151,15 @@ function ProductsContent() {
           {/* Main Content */}
           <main className="flex-1">
             {/* Header / Active Filters */}
-            <div className="mb-6">
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+            <div className="mb-4 sm:mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
                 <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-1">
                     {products.length} result{products.length !== 1 ? 's' : ''} for {categoryParam === 'all' ? 'All Sweets' : categoryParam}
                   </h1>
                 </div>
 
-                <div className="flex items-center gap-2 sm:gap-4">
+                <div className="flex items-center gap-2 flex-wrap">
                   {/* View Switcher */}
                   <div className="hidden sm:flex items-center bg-white rounded-lg p-1 border border-gray-100 shadow-sm">
                     <Button 
@@ -181,10 +181,10 @@ function ProductsContent() {
                   </div>
 
                   {/* Sort Dropdown */}
-                  <div className="flex-1 sm:flex-none flex items-center gap-2">
-                    <span className="hidden sm:inline text-sm text-gray-500">Sort by:</span>
+                  <div className="flex-1 sm:flex-none flex items-center gap-1 sm:gap-2">
+                    <span className="hidden sm:inline text-xs sm:text-sm text-gray-500">Sort:</span>
                     <Select value={sortByParam} onValueChange={(val) => updateParams({ sortBy: val })}>
-                      <SelectTrigger className="w-full sm:w-[160px] bg-white border-gray-100 shadow-sm focus:ring-[#743181]">
+                      <SelectTrigger className="w-full sm:w-[140px] bg-white border-gray-100 shadow-sm focus:ring-[#743181] h-9 sm:h-10 text-xs sm:text-sm">
                         <SelectValue placeholder="Sort by" />
                       </SelectTrigger>
                       <SelectContent>
@@ -197,17 +197,17 @@ function ProductsContent() {
                   </div>
 
                   {/* Mobile Filters Toggle */}
-                  <Button variant="outline" className="lg:hidden h-10 border-gray-100 shadow-sm gap-2">
+                  <Button variant="outline" className="lg:hidden h-9 sm:h-10 border-gray-100 shadow-sm gap-1 px-2 sm:px-3 text-xs sm:text-sm">
                     <SlidersHorizontal className="h-4 w-4" />
-                    Filters
+                    <span className="hidden sm:inline">Filters</span>
                   </Button>
                 </div>
               </div>
 
               {/* Active Filter Badges */}
               {(categoryParam !== 'all' || minPriceParam > 0 || maxPriceParam < 5000 || searchQuery) && (
-                <div className="flex flex-wrap gap-2 items-center mb-6">
-                  <span className="text-sm font-medium text-gray-500 mr-2">Active filters:</span>
+                <div className="flex flex-wrap gap-2 items-center mb-4 sm:mb-6">
+                  <span className="text-xs sm:text-sm font-medium text-gray-500 mr-1">Active:</span>
                   {categoryParam !== 'all' && (
                     <Badge variant="secondary" className="bg-purple-50 text-[#743181] border-purple-100 hover:bg-purple-100 px-3 py-1 gap-1">
                       Category: {categories.find(c => c.slug === categoryParam)?.name}
@@ -240,7 +240,7 @@ function ProductsContent() {
 
             {/* Products Grid */}
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
                 {Array.from({ length: 9 }).map((_, i) => (
                   <div key={`product-skeleton-${i+1}`} className="bg-white rounded-2xl h-[420px] animate-pulse shadow-sm border border-gray-50" />
                 ))}
@@ -263,9 +263,9 @@ function ProductsContent() {
                 </Button>
               </div>
             ) : (
-              <div className={viewMode === 'grid' 
-                ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8" 
-                : "flex flex-col gap-6"
+              <div className={viewMode === 'grid'
+                ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-6 lg:gap-8"
+                : "flex flex-col gap-3 sm:gap-6"
               }>
                 {products.map((product) => {
                   let additionalImages: string[] = []

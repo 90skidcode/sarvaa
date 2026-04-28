@@ -21,7 +21,7 @@ const fallbackBanners: Banner[] = [
     id: 'fallback-1',
     title: 'South Indian Sweets',
     desktopImage: '/banners/south-indian-sweets.png',
-    mobileImage: null,
+    mobileImage: null, // Will use desktop image on mobile if not provided
     link: '/products',
     isActive: true,
     displayOrder: 0,
@@ -30,7 +30,7 @@ const fallbackBanners: Banner[] = [
     id: 'fallback-2',
     title: 'Festive Plum Cake',
     desktopImage: '/banners/festive-plum-cake.png',
-    mobileImage: null,
+    mobileImage: null, // Will use desktop image on mobile if not provided
     link: '/products',
     isActive: true,
     displayOrder: 1,

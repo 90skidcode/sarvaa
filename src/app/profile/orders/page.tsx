@@ -55,7 +55,27 @@ export default function OrdersPage() {
 
     const fetchUserOrders = async () => {
       try {
-        const response = await fetch(`/api/orders?userId=${user.id}&email=${user.email}`)
+        // Send both userId and firebaseUid for compatibility
+        // The user.id might be Firebase UID (old format) or database ID (new format)
+        // The API will handle both cases
+        const params = new URLSearchParams();
+
+        // Always send user.uid as firebaseUid since it's the Firebase UID
+        if (user.uid) {
+          params.append('firebaseUid', user.uid);
+        }
+
+        // Also send user.id - API will use it directly if it's a database ID,
+        // or use firebaseUid to look it up if needed
+        if (user.id) {
+          params.append('userId', user.id);
+        }
+
+        if (user.email) {
+          params.append('email', user.email);
+        }
+
+        const response = await fetch(`/api/orders?${params.toString()}`)
         const data = await response.json()
         if (response.ok) {
           setOrders(data.orders || [])
@@ -89,28 +109,28 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
+      <div className="container mx-auto px-3 sm:px-4">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="flex items-center gap-4 mb-8">
+          <div className="flex items-center gap-2 sm:gap-4 mb-4 sm:mb-8">
             <Link href="/profile">
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <ArrowLeft className="h-5 w-5" />
+              <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 sm:h-10 sm:w-10">
+                <ArrowLeft className="h-4 sm:h-5 w-4 sm:w-5" />
               </Button>
             </Link>
             <div>
-              <h1 className="text-4xl font-bold text-gray-900">My Orders</h1>
-              <p className="text-gray-600 mt-1">Track and manage your orders</p>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">My Orders</h1>
+              <p className="text-gray-600 mt-0.5 sm:mt-1 text-xs sm:text-base">Track and manage your orders</p>
             </div>
           </div>
 
           {orders.length === 0 ? (
             <Card className="border-none shadow-lg">
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <ClipboardList className="h-16 w-16 text-gray-300 mb-4" />
-                <h3 className="text-xl font-semibold text-gray-600">No orders yet</h3>
-                <p className="text-gray-500 mb-6">Start shopping to see your orders here</p>
+              <CardContent className="flex flex-col items-center justify-center py-12 sm:py-16 px-4">
+                <ClipboardList className="h-12 sm:h-16 w-12 sm:w-16 text-gray-300 mb-3 sm:mb-4" />
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-600 text-center">No orders yet</h3>
+                <p className="text-gray-500 mb-4 sm:mb-6 text-sm text-center">Start shopping to see your orders here</p>
                 <Link href="/products">
                   <Button className="bg-[#743181] hover:bg-[#5a2a6e]">
                     Browse Sweets
@@ -119,84 +139,84 @@ export default function OrdersPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {orders.map((order, index) => (
                 <Card key={order.id || `order-${index}`} className="border-none shadow-lg overflow-hidden">
-                  <CardHeader className="bg-gray-50 py-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="p-2 bg-white rounded-lg shadow-sm">
-                          <Package className="h-5 w-5 text-[#743181]" />
+                  <CardHeader className="bg-gray-50 py-3 sm:py-4 px-4 sm:px-6">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+                        <div className="p-1.5 sm:p-2 bg-white rounded-lg shadow-sm flex-shrink-0">
+                          <Package className="h-4 sm:h-5 w-4 sm:w-5 text-[#743181]" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="font-bold text-[#743181]">{order.orderNumber || `#${index + 1}`}</p>
+                            <p className="font-bold text-[#743181] text-xs sm:text-base truncate">{order.orderNumber || `#${index + 1}`}</p>
                           </div>
-                          <p className="text-sm text-gray-500">{formatDate(order.createdAt)}</p>
+                          <p className="text-xs sm:text-sm text-gray-500 truncate">{formatDate(order.createdAt)}</p>
                         </div>
                       </div>
-                      <Badge className={statusColors[order.status] || statusColors.pending}>
+                      <Badge className={`${statusColors[order.status] || statusColors.pending} text-[8px] sm:text-xs px-2 py-1 whitespace-nowrap`}>
                         {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                       </Badge>
                     </div>
                   </CardHeader>
-                  <CardContent className="p-6">
+                  <CardContent className="p-4 sm:p-6">
                     {/* Items */}
-                    <div className="space-y-4 mb-4">
+                    <div className="space-y-3 mb-3 sm:mb-4">
                       {order.items.map((item, itemIndex) => (
-                        <div key={`item-${index}-${itemIndex}`} className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 relative rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                        <div key={`item-${index}-${itemIndex}`} className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+                            <div className="w-12 sm:w-16 h-12 sm:h-16 relative rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
                               <img
                                 src={item.product?.image}
                                 alt={item.product?.name}
                                 className="w-full h-full object-cover"
                               />
                             </div>
-                            <div>
-                              <p className="text-sm font-bold text-gray-900 leading-tight mb-1">{item.product?.name}</p>
-                              <p className="text-xs text-gray-500">
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-bold text-gray-900 leading-tight mb-0.5 truncate">{item.product?.name}</p>
+                              <p className="text-[10px] sm:text-xs text-gray-500 line-clamp-2">
                                 {item.weight && <span>{item.weight} • </span>}
                                 Qty: {item.quantity} × ₹{item.price.toFixed(2)}
                               </p>
                             </div>
                           </div>
-                          <span className="font-bold text-[#743181]">₹{(item.price * item.quantity).toFixed(2)}</span>
+                          <span className="font-bold text-[#743181] text-xs sm:text-base whitespace-nowrap">₹{(item.price * item.quantity).toFixed(2)}</span>
                         </div>
                       ))}
                     </div>
 
                     {/* Order Details */}
-                    <div className="border-t pt-4 mt-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Store className="h-4 w-4" />
-                          <span className="text-sm">Store Pickup</span>
+                    <div className="border-t pt-3 sm:pt-4 mt-3 sm:mt-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 sm:gap-2 text-gray-600">
+                          <Store className="h-3 sm:h-4 w-3 sm:w-4 flex-shrink-0" />
+                          <span className="text-xs sm:text-sm">Store Pickup</span>
                         </div>
                         <div className="text-right">
-                          <p className="text-xs text-gray-500">Total Amount</p>
-                          <p className="text-xl font-bold text-[#743181]">₹{order.total.toFixed(2)}</p>
+                          <p className="text-[8px] sm:text-xs text-gray-500">Total Amount</p>
+                          <p className="text-base sm:text-xl font-bold text-[#743181]">₹{order.total.toFixed(2)}</p>
                         </div>
                       </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="mt-4 pt-4 border-t flex justify-between items-center">
-                      <p className="text-sm text-gray-500">
+                    <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                      <p className="text-xs sm:text-sm text-gray-500">
                         Payment: <span className="font-medium text-gray-700 uppercase">{order.paymentMethod}</span>
                       </p>
-                      <div className="flex gap-2">
+                      <div className="flex gap-1 sm:gap-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="text-[#743181] border-[#743181] hover:bg-purple-50"
+                          className="text-[#743181] border-[#743181] hover:bg-purple-50 text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9"
                           onClick={() => generateInvoice(order)}
                         >
-                          <Download className="h-4 w-4 mr-1" /> Invoice
+                          <Download className="h-3 sm:h-4 w-3 sm:w-4 mr-1" /> Invoice
                         </Button>
                         <Link href={`/profile/orders/${order.orderNumber || order.id}`}>
-                          <Button variant="ghost" size="sm" className="text-[#743181] hover:bg-purple-50">
-                            View Details <ChevronRight className="h-4 w-4 ml-1" />
+                          <Button variant="ghost" size="sm" className="text-[#743181] hover:bg-purple-50 text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9">
+                            View <ChevronRight className="h-3 sm:h-4 w-3 sm:w-4 ml-0.5" />
                           </Button>
                         </Link>
                       </div>

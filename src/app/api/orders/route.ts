@@ -6,8 +6,21 @@ export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = getParam(searchParams, "userId");
+    let userId = getParam(searchParams, "userId");
+    const firebaseUid = getParam(searchParams, "firebaseUid");
     const emailInput = getParam(searchParams, "email");
+
+    // If firebaseUid is provided, use it to get the database user ID
+    // This handles both old (Firebase UID) and new (database ID) formats
+    if (firebaseUid) {
+      const user = await db.user.findUnique({
+        where: { firebaseUid },
+        select: { id: true }
+      });
+      if (user) {
+        userId = user.id;
+      }
+    }
     const status = searchParams.get("status");
     const storeId = searchParams.get("storeId");
     const search = searchParams.get("search");
@@ -101,17 +114,7 @@ async function buildOrderWhereClause(
   const where: any = {};
 
   if (userId) {
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      select: { email: true },
-    });
-
-    const conditions: any[] = [{ userId }];
-    if (user?.email) conditions.push({ email: user.email });
-    if (emailInput && emailInput !== user?.email)
-      conditions.push({ email: emailInput });
-
-    where.OR = conditions;
+    where.userId = userId;
   } else if (emailInput) {
     where.email = emailInput;
   }
@@ -166,6 +169,10 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
 
+    // Normalize empty strings to null
+    const normalizedEmail = email?.trim() || null;
+    const normalizedName = name?.trim() || null;
+
     const subtotal = items.reduce(
       (sum: number, item: any) =>
         sum + (item.price || 0) * (item.quantity || 0),
@@ -189,7 +196,7 @@ export async function POST(request: NextRequest) {
     if (userId) {
       const existingUser = await db.user.findFirst({
         where: {
-          OR: [{ id: userId }, { email: email || undefined }],
+          OR: [{ id: userId }, { email: normalizedEmail || undefined }],
         },
       });
       if (existingUser) {
@@ -207,8 +214,8 @@ export async function POST(request: NextRequest) {
             discountAmount,
             couponCode: appliedCoupon?.code || null,
             phone,
-            email,
-            name,
+            email: normalizedEmail,
+            name: normalizedName,
             address,
             notes,
             ...(appliedCoupon

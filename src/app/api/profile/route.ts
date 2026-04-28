@@ -10,16 +10,33 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Find user profile by Firebase UID
+    // Find user in User table by Firebase UID
+    const user = await db.user.findUnique({
+      where: { firebaseUid },
+      select: { id: true, email: true, name: true, phone: true, phoneNumber: true, address: true }
+    });
+
+    // Also find user profile by Firebase UID
     const profile = await db.userProfile.findUnique({
       where: { firebaseUid },
     });
 
-    if (!profile) {
+    if (!user && !profile) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ profile });
+    // Merge data from both tables, preferring User table
+    const mergedProfile = {
+      id: user?.id,
+      firebaseUid,
+      name: user?.name || profile?.name || '',
+      email: user?.email || profile?.email || '',
+      phone: user?.phone || profile?.phone || '',
+      phoneNumber: user?.phoneNumber || profile?.phoneNumber || '',
+      address: user?.address || profile?.address || '',
+    };
+
+    return NextResponse.json({ profile: mergedProfile, user: mergedProfile });
   } catch (error) {
     console.error("Error fetching profile:", error);
     return NextResponse.json(

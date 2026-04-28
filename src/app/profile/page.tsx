@@ -176,65 +176,66 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
+      <div className="container mx-auto px-3 sm:px-4">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-8">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900">My Profile</h1>
-              <p className="text-gray-600 mt-1">Manage your account details</p>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">My Profile</h1>
+              <p className="text-gray-600 mt-0.5 sm:mt-1 text-xs sm:text-base">Manage your account details</p>
             </div>
-            <Link href="/profile/orders">
-              <Button variant="outline" className="border-[#743181] text-[#743181] hover:bg-purple-50">
+            <Link href="/profile/orders" className="w-full sm:w-auto">
+              <Button variant="outline" className="border-[#743181] text-[#743181] hover:bg-purple-50 w-full sm:w-auto">
                 <ClipboardList className="h-4 w-4 mr-2" />
                 My Orders
               </Button>
             </Link>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
             {/* Profile Card */}
             <Card className="md:col-span-2 border-none shadow-lg">
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 p-4 sm:p-6">
                 <CardTitle className="flex items-center gap-2 text-[#743181]">
-                  <User className="h-5 w-5" />
-                  Personal Information
+                  <User className="h-4 sm:h-5 w-4 sm:w-5" />
+                  <span className="text-lg sm:text-xl">Personal Information</span>
                 </CardTitle>
                 {!editing ? (
-                  <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
+                  <Button variant="ghost" size="sm" onClick={() => setEditing(true)} className="w-full sm:w-auto">
                     <Edit className="h-4 w-4 mr-2" />
                     Edit
                   </Button>
                 ) : (
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
-                      <X className="h-4 w-4 mr-2" />
-                      Cancel
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <Button variant="ghost" size="sm" onClick={() => setEditing(false)} className="flex-1 sm:flex-none">
+                      <X className="h-4 w-4 mr-1" />
+                      <span className="hidden sm:inline">Cancel</span>
                     </Button>
-                    <Button size="sm" onClick={handleSave} disabled={saving} className="bg-[#743181] hover:bg-[#5a2a6e]">
-                      <Save className="h-4 w-4 mr-2" />
-                      {saving ? 'Saving...' : 'Save'}
+                    <Button size="sm" onClick={handleSave} disabled={saving} className="flex-1 sm:flex-none bg-[#743181] hover:bg-[#5a2a6e]">
+                      <Save className="h-4 w-4 mr-1" />
+                      <span className="hidden sm:inline">{saving ? 'Saving...' : 'Save'}</span>
+                      <span className="sm:hidden">{saving ? '...' : 'Save'}</span>
                     </Button>
                   </div>
                 )}
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
                 {editing ? (
                   <>
-                    <div className="space-y-2">
-                      <label htmlFor="profile-name" className="block text-sm font-medium text-gray-700">Full Name</label>
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <label htmlFor="profile-name" className="block text-xs sm:text-sm font-medium text-gray-700">Full Name</label>
                       <Input
                         id="profile-name"
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
                         placeholder="Your full name"
-                        className="rounded-xl"
+                        className="rounded-lg sm:rounded-xl p-3 sm:p-4 text-sm h-10 sm:h-12"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <label htmlFor="profile-email" className="block text-sm font-medium text-gray-700">Email</label>
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <label htmlFor="profile-email" className="block text-xs sm:text-sm font-medium text-gray-700">Email</label>
                       <Input
                         id="profile-email"
                         name="email"
@@ -242,13 +243,13 @@ export default function ProfilePage() {
                         value={formData.email}
                         onChange={handleChange}
                         placeholder="your@email.com"
-                        className="rounded-xl"
+                        className="rounded-lg sm:rounded-xl p-3 sm:p-4 text-sm h-10 sm:h-12"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <label htmlFor="profile-phone" className="block text-sm font-medium text-gray-700">Phone</label>
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <label htmlFor="profile-phone" className="block text-xs sm:text-sm font-medium text-gray-700">Phone</label>
                       <div className="flex gap-2">
-                        <div className="flex items-center justify-center bg-gray-100 rounded-xl px-4 font-medium text-gray-500">+91</div>
+                        <div className="flex items-center justify-center bg-gray-100 rounded-lg sm:rounded-xl px-2 sm:px-4 font-medium text-gray-500 text-sm">+91</div>
                         <Input
                           id="profile-phone"
                           name="phone"
@@ -257,59 +258,59 @@ export default function ProfilePage() {
                           disabled
                           placeholder="9876543210"
                           maxLength={10}
-                          className="rounded-xl flex-1 bg-gray-100 cursor-not-allowed"
+                          className="rounded-lg sm:rounded-xl p-3 sm:p-4 text-sm h-10 sm:h-12 flex-1 bg-gray-100 cursor-not-allowed"
                         />
                       </div>
-                      <p className="text-xs text-gray-500 italic">Phone number cannot be changed as it's linked to your account</p>
+                      <p className="text-[8px] sm:text-xs text-gray-500 italic">Phone number cannot be changed as it's linked to your account</p>
                     </div>
-                    <div className="space-y-2">
-                      <label htmlFor="profile-address" className="block text-sm font-medium text-gray-700">Address</label>
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <label htmlFor="profile-address" className="block text-xs sm:text-sm font-medium text-gray-700">Address</label>
                       <Input
                         id="profile-address"
                         name="address"
                         value={formData.address}
                         onChange={handleChange}
                         placeholder="Your address"
-                        className="rounded-xl"
+                        className="rounded-lg sm:rounded-xl p-3 sm:p-4 text-sm h-10 sm:h-12"
                       />
                     </div>
                   </>
                 ) : (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-                      <div className="p-3 bg-white rounded-full shadow-sm">
-                        <User className="h-5 w-5 text-[#743181]" />
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl">
+                      <div className="p-2 sm:p-3 bg-white rounded-full shadow-sm flex-shrink-0">
+                        <User className="h-4 sm:h-5 w-4 sm:w-5 text-[#743181]" />
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-500 font-medium uppercase">Name</p>
-                        <p className="text-gray-900 font-semibold">{user?.name || 'Not set'}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-                      <div className="p-3 bg-white rounded-full shadow-sm">
-                        <Mail className="h-5 w-5 text-[#743181]" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 font-medium uppercase">Email</p>
-                        <p className="text-gray-900 font-semibold">{user?.email || 'Not set'}</p>
+                      <div className="min-w-0">
+                        <p className="text-[8px] sm:text-xs text-gray-500 font-medium uppercase">Name</p>
+                        <p className="text-sm sm:text-base text-gray-900 font-semibold truncate">{user?.name || 'Not set'}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-                      <div className="p-3 bg-white rounded-full shadow-sm">
-                        <Phone className="h-5 w-5 text-[#743181]" />
+                    <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl">
+                      <div className="p-2 sm:p-3 bg-white rounded-full shadow-sm flex-shrink-0">
+                        <Mail className="h-4 sm:h-5 w-4 sm:w-5 text-[#743181]" />
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-500 font-medium uppercase">Phone</p>
-                        <p className="text-gray-900 font-semibold">{user?.phone ? `+91 ${user.phone}` : 'Not set'}</p>
+                      <div className="min-w-0">
+                        <p className="text-[8px] sm:text-xs text-gray-500 font-medium uppercase">Email</p>
+                        <p className="text-sm sm:text-base text-gray-900 font-semibold truncate">{user?.email || 'Not set'}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-                      <div className="p-3 bg-white rounded-full shadow-sm">
-                        <MapPin className="h-5 w-5 text-[#743181]" />
+                    <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl">
+                      <div className="p-2 sm:p-3 bg-white rounded-full shadow-sm flex-shrink-0">
+                        <Phone className="h-4 sm:h-5 w-4 sm:w-5 text-[#743181]" />
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-500 font-medium uppercase">Address</p>
-                        <p className="text-gray-900 font-semibold">{user?.address || 'Not set'}</p>
+                      <div className="min-w-0">
+                        <p className="text-[8px] sm:text-xs text-gray-500 font-medium uppercase">Phone</p>
+                        <p className="text-sm sm:text-base text-gray-900 font-semibold truncate">{user?.phone ? `+91 ${user.phone}` : 'Not set'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl">
+                      <div className="p-2 sm:p-3 bg-white rounded-full shadow-sm flex-shrink-0">
+                        <MapPin className="h-4 sm:h-5 w-4 sm:w-5 text-[#743181]" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[8px] sm:text-xs text-gray-500 font-medium uppercase">Address</p>
+                        <p className="text-sm sm:text-base text-gray-900 font-semibold truncate">{user?.address || 'Not set'}</p>
                       </div>
                     </div>
                   </div>
@@ -318,31 +319,31 @@ export default function ProfilePage() {
             </Card>
 
             {/* Quick Actions */}
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <Card className="border-none shadow-lg">
-                <CardContent className="p-6">
-                  <div className="w-20 h-20 bg-gradient-to-br from-[#743181] to-[#5a2a6e] rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-3xl font-bold text-white">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="w-16 sm:w-20 h-16 sm:h-20 bg-gradient-to-br from-[#743181] to-[#5a2a6e] rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <span className="text-2xl sm:text-3xl font-bold text-white">
                       {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                     </span>
                   </div>
-                  <h3 className="text-xl font-bold text-center text-gray-900">{user?.name || 'User'}</h3>
-                  <p className="text-sm text-gray-500 text-center">{user?.email}</p>
+                  <h3 className="text-base sm:text-xl font-bold text-center text-gray-900 truncate">{user?.name || 'User'}</h3>
+                  <p className="text-xs sm:text-sm text-gray-500 text-center truncate">{user?.email}</p>
                 </CardContent>
               </Card>
 
               <Card className="border-none shadow-lg">
-                <CardContent className="p-4 space-y-2">
-                  <Link href="/profile/orders" className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors">
-                    <ClipboardList className="h-5 w-5 text-[#743181]" />
-                    <span className="font-medium text-gray-700">Order History</span>
+                <CardContent className="p-3 sm:p-4 space-y-1.5">
+                  <Link href="/profile/orders" className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg sm:rounded-xl hover:bg-gray-50 transition-colors">
+                    <ClipboardList className="h-4 sm:h-5 w-4 sm:w-5 text-[#743181] flex-shrink-0" />
+                    <span className="font-medium text-gray-700 text-sm">Order History</span>
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 transition-colors w-full text-left"
+                    className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg sm:rounded-xl hover:bg-red-50 transition-colors w-full text-left"
                   >
-                    <LogOut className="h-5 w-5 text-red-500" />
-                    <span className="font-medium text-red-500">Logout</span>
+                    <LogOut className="h-4 sm:h-5 w-4 sm:w-5 text-red-500 flex-shrink-0" />
+                    <span className="font-medium text-red-500 text-sm">Logout</span>
                   </button>
                 </CardContent>
               </Card>
