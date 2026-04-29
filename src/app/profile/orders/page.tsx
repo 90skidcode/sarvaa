@@ -3,6 +3,7 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { ImageWithFallback } from '@/components/ImageWithFallback'
 import { getCurrentUser } from '@/lib/api-client'
 import { generateInvoice } from '@/lib/invoice'
 import { ArrowLeft, ChevronRight, ClipboardList, Download, Package, Store } from 'lucide-react'
@@ -167,10 +168,11 @@ export default function OrdersPage() {
                         <div key={`item-${index}-${itemIndex}`} className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                             <div className="w-12 sm:w-16 h-12 sm:h-16 relative rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-                              <img
+                              <ImageWithFallback
                                 src={item.product?.image}
                                 alt={item.product?.name}
-                                className="w-full h-full object-cover"
+                                className="object-cover"
+                                fallbackClassName="bg-gray-100"
                               />
                             </div>
                             <div className="min-w-0">
