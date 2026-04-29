@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { getCurrentUser } from '@/lib/api-client'
 import { useCartStore } from '@/lib/store'
-import { ArrowLeft, CheckCircle2, CreditCard, Phone, Store, User } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Store, User } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -22,7 +22,7 @@ interface StoreLocation {
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items, getSubtotal, clearCart } = useCartStore()
+  const { items, getSubtotal } = useCartStore()
 
   const [loading, setLoading] = useState(false)
   const [stores, setStores] = useState<StoreLocation[]>([])
@@ -33,8 +33,7 @@ export default function CheckoutPage() {
     name: '',
     email: '',
     phone: '',
-    selectedStore: '',
-    paymentMethod: 'cod' as 'cod' | 'phonepe'
+    selectedStore: ''
   })
 
   useEffect(() => {
@@ -174,69 +173,25 @@ export default function CheckoutPage() {
         }))
       }
 
-      // Handle COD payment (existing flow)
-      if (formData.paymentMethod === 'cod') {
-        const response = await fetch('/api/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(orderData)
+      // Handle PhonePe payment
+      const response = await fetch('/api/phonepe/initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData)
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        toast.info('Redirecting to PhonePe...', {
+          description: `Order ${data.orderNumber} initiated`
         })
 
-        if (response.ok) {
-          const data = await response.json()
-          const order = data.order
-
-          // Also store order in localStorage for user's order history fallback
-          const localOrders = JSON.parse(localStorage.getItem('orders') || '[]')
-          localOrders.push({
-            id: order.id,
-            orderNumber: order.orderNumber,
-            items: items,
-            total: order.total,
-            status: order.status,
-            createdAt: order.createdAt
-          })
-          localStorage.setItem('orders', JSON.stringify(localOrders))
-
-          // Clear cart
-          clearCart()
-
-          // Show success
-          const storeName = stores.find(s => s.id === formData.selectedStore)?.name
-          toast.success(`Order ${order.orderNumber} confirmed!`, {
-            description: `Pick up from ${storeName}. Total: ₹${order.total}`
-          })
-
-          // Redirect to success page
-          setTimeout(() => {
-            router.push('/?order=success')
-          }, 1500)
-        } else {
-          const errorData = await response.json()
-          console.error('API order save failed:', errorData)
-          toast.error(`Order failed: ${errorData.error || 'Please check your details'}`)
-        }
-      } else if (formData.paymentMethod === 'phonepe') {
-        // Handle PhonePe payment
-        const response = await fetch('/api/phonepe/initiate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(orderData)
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          toast.info('Redirecting to PhonePe...', {
-            description: `Order ${data.orderNumber} initiated`
-          })
-
-          // Hard redirect to PhonePe payment URL
-          window.location.href = data.phonePeRedirectUrl
-        } else {
-          const errorData = await response.json()
-          console.error('PhonePe initiation failed:', errorData)
-          toast.error(`Payment initiation failed: ${errorData.error || 'Please check your details'}`)
-        }
+        // Hard redirect to PhonePe payment URL
+        globalThis.location.href = data.phonePeRedirectUrl
+      } else {
+        const errorData = await response.json()
+        console.error('PhonePe initiation failed:', errorData)
+        toast.error(`Payment initiation failed: ${errorData.error || 'Please check your details'}`)
       }
     } catch (error) {
       console.error('Checkout error:', error)
@@ -378,68 +333,6 @@ export default function CheckoutPage() {
                     />
                   </div>
                   <p className="text-[8px] sm:text-[10px] text-gray-400 font-bold uppercase tracking-wider ml-1 mt-1">Used for order confirmation & pickup updates</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Payment Method Selection */}
-            <Card className="border-none shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-[#743181]">
-                  <CreditCard className="h-5 w-5" />
-                  Payment Method
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 p-4 sm:p-6">
-                <div className="space-y-3">
-                  <label
-                    htmlFor="payment-cod"
-                    className={`flex gap-4 p-4 border-2 rounded-2xl cursor-pointer transition-all ${
-                      formData.paymentMethod === 'cod'
-                        ? 'border-[#743181] bg-purple-50 shadow-md'
-                        : 'border-gray-50 bg-white hover:border-purple-200'
-                    }`}
-                  >
-                    <input
-                      id="payment-cod"
-                      type="radio"
-                      name="paymentMethod"
-                      value="cod"
-                      checked={formData.paymentMethod === 'cod'}
-                      onChange={handleChange}
-                      className="w-5 h-5 mt-1 text-[#743181]"
-                    />
-                    <div className="flex-1">
-                      <p className="font-bold text-gray-900">Pay at Pickup (Cash)</p>
-                      <p className="text-sm text-gray-500 mt-1">Pay with cash when you pick up your order</p>
-                    </div>
-                  </label>
-
-                  <label
-                    htmlFor="payment-phonepe"
-                    className={`flex gap-4 p-4 border-2 rounded-2xl cursor-pointer transition-all ${
-                      formData.paymentMethod === 'phonepe'
-                        ? 'border-[#743181] bg-purple-50 shadow-md'
-                        : 'border-gray-50 bg-white hover:border-purple-200'
-                    }`}
-                  >
-                    <input
-                      id="payment-phonepe"
-                      type="radio"
-                      name="paymentMethod"
-                      value="phonepe"
-                      checked={formData.paymentMethod === 'phonepe'}
-                      onChange={handleChange}
-                      className="w-5 h-5 mt-1 text-[#743181]"
-                    />
-                    <div className="flex-1">
-                      <p className="font-bold text-gray-900 flex items-center gap-2">
-                        <Phone className="h-4 w-4" />
-                        PhonePe (UPI, Cards, Netbanking)
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">Pay securely online and confirm your order instantly</p>
-                    </div>
-                  </label>
                 </div>
               </CardContent>
             </Card>
