@@ -3,15 +3,17 @@
 import { CartBadge } from '@/components/CartBadge'
 import { Button } from '@/components/ui/button'
 import { getCurrentUser, isAuthenticated } from '@/lib/api-client'
-import { Heart, Home, Menu, ShoppingBag, User } from 'lucide-react'
+import { Heart, Home, ShoppingCart, ShoppingBag, User } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useCartStore } from '@/lib/store'
 import { useEffect, useState } from 'react'
 
 export function BottomNavigation() {
   const pathname = usePathname()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [wishlistCount, setWishlistCount] = useState(0)
+  const cartItems = useCartStore((state) => state.items) || []
 
   // Hide on pages where bottom nav shouldn't appear
   if (pathname === '/checkout' || pathname === '/login' || pathname.startsWith('/admin')) {
@@ -91,10 +93,15 @@ export function BottomNavigation() {
           <span className="text-[10px] mt-0.5">{isLoggedIn ? 'Profile' : 'Login'}</span>
         </Link>
 
-        {/* Menu */}
-        <Link href="/contact" className={`flex flex-col items-center justify-center w-12 h-12 rounded-lg transition-all ${isActive('/contact') ? 'bg-purple-50' : ''}`}>
-          <Menu className={`h-6 w-6 ${isActive('/contact')}`} />
-          <span className="text-[10px] mt-0.5">More</span>
+        {/* Cart */}
+        <Link href="/cart" className={`flex flex-col items-center justify-center w-12 h-12 rounded-lg relative transition-all ${isActive('/cart') ? 'bg-purple-50' : ''}`}>
+          <ShoppingCart className={`h-6 w-6 ${isActive('/cart')}`} />
+          {cartItems.length > 0 && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+              {cartItems.length}
+            </span>
+          )}
+          <span className="text-[10px] mt-0.5">Cart</span>
         </Link>
       </div>
     </nav>

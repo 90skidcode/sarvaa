@@ -29,16 +29,16 @@ export function Footer() {
         </svg>
       </div>
 
-      <div className="bg-pink-50 py-16">
+      <div className="bg-pink-50 py-2 sm:py-16">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
+          <div className="text-center mb-2 sm:mb-16">
              <h2 className="text-3xl md:text-5xl font-serif font-bold text-[#743181] mb-4">
                Crafted with <span className="italic">Thamizh Parampara</span>
              </h2>
              <div className="w-24 h-1 bg-gradient-to-r from-[#743181] to-pink-400 mx-auto"></div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 text-gray-700">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-12 text-gray-700">
             <div>
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-100">
@@ -83,7 +83,7 @@ export function Footer() {
 
           </div>
 
-          <div className="border-t border-gray-200 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
+          <div className="border-t border-gray-200 mt-2 sm:mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
             <p>&copy; {new Date().getFullYear()} Sarvaa Sweets. Dedicated to Tamil Traditions.</p>
             <div className="flex flex-wrap justify-center md:justify-end gap-x-6 gap-y-2">
               <Link href="/privacy" className="hover:text-gray-900 transition-colors">Privacy Policy</Link>

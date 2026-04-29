@@ -16,7 +16,7 @@ export function ConditionalLayout({ children }: { readonly children: React.React
   return (
     <>
       <Header />
-      <div className="pb-20 sm:pb-0">
+      <div className="pb-2 sm:pb-0">
         {children}
       </div>
       <Footer />
