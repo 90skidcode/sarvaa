@@ -116,15 +116,15 @@ export async function initiatePhonePePayment(
 
   const data = await response.json();
 
-  if (!data.success || !data.data?.redirectUrl) {
+  if (!data.redirectUrl) {
     console.error(`PhonePe response:`, data);
     throw new Error(
-      `PhonePe payment initiation failed: ${data.message || "Unknown error"}`
+      `PhonePe payment initiation failed: ${data.message || "No redirect URL received"}`
     );
   }
 
   console.log(`PhonePe redirect URL obtained`);
-  return data.data.redirectUrl;
+  return data.redirectUrl;
 }
 
 interface PhonePeOrderStatus {
