@@ -12,7 +12,7 @@ const getPhonePeConfig = (): PhonePeConfig => {
   if (PHONEPE_ENV === "PRODUCTION") {
     return {
       baseUrl: "https://api.phonepe.com/apis/pg",
-      tokenUrl: "https://api.phonepe.com/apis/pg/v1/oauth/token",
+      tokenUrl: "https://api.phonepe.com/apis/identity-manager/v1/oauth/token",
     };
   }
   return {
@@ -31,17 +31,18 @@ let cachedToken: CachedToken | null = null;
 export async function getPhonePeAccessToken(): Promise<string> {
   // Return cached token if still valid
   if (cachedToken && cachedToken.expiresAt > Date.now()) {
+    console.log("Using cached PhonePe token");
     return cachedToken.token;
   }
 
   const config = getPhonePeConfig();
 
-  // PhonePe OAuth 2.0 token request
+  // PhonePe OAuth 2.0 token request (tested and working in Postman)
   const params = new URLSearchParams({
     client_id: PHONEPE_CLIENT_ID || "",
     client_secret: PHONEPE_CLIENT_SECRET || "",
     grant_type: "client_credentials",
-    client_version: "1.0",
+    client_version: "1",
   });
 
   console.log(`Fetching PhonePe token from: ${config.tokenUrl}`);
@@ -62,7 +63,7 @@ export async function getPhonePeAccessToken(): Promise<string> {
 
   const data = await response.json();
   const token = data.access_token;
-  const expiresIn = data.expires_in || 1800; // Default 30 minutes
+  const expiresIn = data.expires_in || 3600;
 
   // Cache token with 5-minute buffer before expiry
   cachedToken = {
@@ -85,7 +86,7 @@ export async function initiatePhonePePayment(
   const payload = {
     merchantOrderId,
     amount: amountInPaise,
-    expireAfter: 1200, // 20 minutes
+    expireAfter: 1200,
     paymentFlow: {
       type: "PG_CHECKOUT",
       message: `Payment for Sarvaa order ${merchantOrderId}`,
@@ -96,7 +97,7 @@ export async function initiatePhonePePayment(
     disablePaymentRetry: false,
   };
 
-  console.log(`Initiating payment to: ${config.baseUrl}/checkout/v2/pay`);
+  console.log(`Initiating PhonePe payment to: ${config.baseUrl}/checkout/v2/pay`);
 
   const response = await fetch(`${config.baseUrl}/checkout/v2/pay`, {
     method: "POST",
@@ -122,6 +123,7 @@ export async function initiatePhonePePayment(
     );
   }
 
+  console.log(`PhonePe redirect URL obtained`);
   return data.data.redirectUrl;
 }
 
@@ -136,6 +138,8 @@ export async function getPhonePeOrderStatus(
 ): Promise<PhonePeOrderStatus> {
   const token = await getPhonePeAccessToken();
   const config = getPhonePeConfig();
+
+  console.log(`Checking PhonePe order status for: ${merchantOrderId}`);
 
   const response = await fetch(
     `${config.baseUrl}/checkout/v2/status/${merchantOrderId}`,
