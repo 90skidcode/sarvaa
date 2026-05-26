@@ -1,0 +1,371 @@
+import { db } from "@/lib/db";
+import { NextRequest, NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    let userId = getParam(searchParams, "userId");
+    const firebaseUid = getParam(searchParams, "firebaseUid");
+    const emailInput = getParam(searchParams, "email");
+
+    // If firebaseUid is provided, use it to get the database user ID
+    // This handles both old (Firebase UID) and new (database ID) formats
+    if (firebaseUid) {
+      const user = await db.user.findUnique({
+        where: { firebaseUid },
+        select: { id: true }
+      });
+      if (user) {
+        userId = user.id;
+      }
+    }
+    const status = searchParams.get("status");
+    const storeId = searchParams.get("storeId");
+    const search = searchParams.get("search");
+    const page = Number.parseInt(searchParams.get("page") || "1");
+    const limitInput = searchParams.get("limit");
+    const limit = limitInput ? Number.parseInt(limitInput) : 10; // Default limit
+    const skip = (page - 1) * limit;
+
+    const where = await buildOrderWhereClause(
+      userId,
+      emailInput,
+      status,
+      storeId,
+      search,
+    );
+
+    // Base where for status counts (authorized store but NO status filter and NO search)
+    const baseWhere = await buildOrderWhereClause(
+      userId,
+      emailInput,
+      "all",
+      storeId,
+      null,
+    );
+
+    const [orders, total, statusGroups] = await Promise.all([
+      db.order.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          items: { include: { product: true } },
+          user: true,
+          store: true,
+          statusHistory: { orderBy: { createdAt: "asc" } },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      db.order.count({ where }),
+      // Single groupBy instead of 7 separate count queries
+      db.order.groupBy({
+        by: ["status"],
+        where: baseWhere,
+        _count: true,
+      }),
+    ]);
+
+    // Build status counts from groupBy result
+    const statusCounts: Record<string, number> = {
+      pending: 0,
+      confirmed: 0,
+      preparing: 0,
+      ready: 0,
+      delivered: 0,
+      cancelled: 0,
+      all: 0,
+    };
+    for (const group of statusGroups) {
+      statusCounts[group.status] = group._count;
+      statusCounts.all += group._count;
+    }
+
+    return NextResponse.json({
+      orders,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+      statusCounts,
+    });
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch orders" },
+      { status: 500 },
+    );
+  }
+}
+
+function getParam(params: URLSearchParams, key: string) {
+  const val = params.get(key);
+  if (val === "null" || val === "undefined" || !val) return null;
+  return val;
+}
+
+async function buildOrderWhereClause(
+  userId: string | null,
+  emailInput: string | null,
+  status: string | null,
+  storeId: string | null,
+  search: string | null,
+) {
+  const where: any = {};
+
+  if (userId) {
+    where.userId = userId;
+  } else if (emailInput) {
+    where.email = emailInput;
+  }
+
+  if (status && status !== "all") where.status = status;
+  if (storeId && storeId !== "all") where.storeId = storeId;
+
+  if (search) {
+    where.AND = [
+      ...(where.AND || []),
+      {
+        OR: [
+          { orderNumber: { contains: search, mode: "insensitive" } },
+          { name: { contains: search, mode: "insensitive" } },
+          { email: { contains: search, mode: "insensitive" } },
+          { phone: { contains: search, mode: "insensitive" } },
+          { user: { name: { contains: search, mode: "insensitive" } } },
+          { user: { email: { contains: search, mode: "insensitive" } } },
+        ],
+      },
+    ];
+  }
+
+  return where;
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const {
+      userId,
+      items,
+      phone,
+      address,
+      name,
+      email,
+      notes,
+      storeId,
+      couponId,
+    } = body;
+
+    // Basic validation
+    if (!items || items.length === 0)
+      return NextResponse.json({ error: "Missing items" }, { status: 400 });
+    if (!phone)
+      return NextResponse.json({ error: "Missing phone" }, { status: 400 });
+    if (!address)
+      return NextResponse.json({ error: "Missing address" }, { status: 400 });
+    if (!userId && !name)
+      return NextResponse.json(
+        { error: "Name is required for guest orders" },
+        { status: 400 },
+      );
+
+    // Normalize empty strings to null
+    const normalizedEmail = email?.trim() || null;
+    const normalizedName = name?.trim() || null;
+
+    // SERVER-SIDE PRICE VALIDATION: Fetch actual prices from DB
+    const productIds = items.map((item: any) => item.productId);
+    const products = await db.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, price: true, weights: true, isActive: true },
+    });
+
+    const productMap = new Map(products.map((p) => [p.id, p]));
+
+    // Validate all products exist and are active, then compute server-side prices
+    const validatedItems = items.map((item: any) => {
+      const product = productMap.get(item.productId);
+      if (!product) throw new Error(`Product ${item.productId} not found`);
+      if (!product.isActive) throw new Error(`Product ${item.productId} is no longer available`);
+
+      // Determine correct price from weight variant or base price
+      let serverPrice = product.price;
+      if (item.weight && product.weights) {
+        try {
+          const weights = JSON.parse(product.weights);
+          const variant = weights.find((w: any) => w.weight === item.weight);
+          if (variant) serverPrice = variant.price;
+        } catch { /* use base price if weights JSON is invalid */ }
+      }
+
+      return { ...item, price: serverPrice };
+    });
+
+    const subtotal = validatedItems.reduce(
+      (sum: number, item: any) => sum + item.price * (item.quantity || 0),
+      0,
+    );
+
+    // Calculate Discount
+    const { discountAmount, appliedCoupon } = await calculateOrderDiscount(
+      couponId,
+      validatedItems,
+      subtotal,
+    );
+    const finalTotal = subtotal - discountAmount;
+
+    // Generate unique order number using timestamp + random to avoid race conditions
+    const timestamp = Date.now().toString(36);
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const orderNumber = `ORD-${timestamp}-${random}`;
+
+    // Verify if userId exists in User table OR find by email
+    let userToConnect: string | null = null;
+    if (userId) {
+      const existingUser = await db.user.findFirst({
+        where: {
+          OR: [{ id: userId }, { email: normalizedEmail || undefined }],
+        },
+      });
+      if (existingUser) {
+        userToConnect = existingUser.id;
+      }
+    }
+
+    // Create Order with Transaction
+    const order = await db.$transaction(
+      async (tx) => {
+        const newOrder = await tx.order.create({
+          data: {
+            orderNumber,
+            total: finalTotal,
+            discountAmount,
+            couponCode: appliedCoupon?.code || null,
+            phone,
+            email: normalizedEmail,
+            name: normalizedName,
+            address,
+            notes,
+            ...(appliedCoupon
+              ? { coupon: { connect: { id: appliedCoupon.id } } }
+              : {}),
+            ...(storeId ? { store: { connect: { id: storeId } } } : {}),
+            ...(userToConnect
+              ? { user: { connect: { id: userToConnect } } }
+              : {}),
+            items: {
+              create: validatedItems.map((item: any) => ({
+                productId: item.productId,
+                quantity: item.quantity,
+                price: item.price, // Server-validated price
+                weight: item.weight || null,
+              })),
+            },
+            statusHistory: {
+              create: { status: "pending", notes: "Order placed successfully" },
+            },
+          },
+          include: {
+            items: { include: { product: true } },
+            user: true,
+            statusHistory: { orderBy: { createdAt: "asc" } },
+          },
+        });
+
+        if (appliedCoupon) {
+          await tx.coupon.update({
+            where: { id: appliedCoupon.id },
+            data: { usedCount: { increment: 1 } },
+          });
+        }
+        return newOrder;
+      },
+      {
+        maxWait: 5000,
+        timeout: 10000,
+      },
+    );
+
+    // Clear cart (best effort, don't block order)
+    if (userId)
+      db.cartItem.deleteMany({ where: { userId } }).catch(console.error);
+
+    return NextResponse.json({ order }, { status: 201 });
+  } catch (error: any) {
+    console.error("Error creating order:", error);
+    return NextResponse.json(
+      {
+        error: "Failed to create order",
+        message: error.message || "Unknown error occurred",
+      },
+      { status: 500 },
+    );
+  }
+}
+
+async function calculateOrderDiscount(
+  couponId: string | null,
+  items: any[],
+  subtotal: number,
+) {
+  if (!couponId) return { discountAmount: 0, appliedCoupon: null };
+
+  const coupon = await db.coupon.findUnique({
+    where: { id: couponId },
+    include: {
+      applicableProducts: { select: { id: true } },
+      applicableCategories: { select: { id: true } },
+    },
+  });
+
+  if (!coupon || !coupon.isActive)
+    return { discountAmount: 0, appliedCoupon: null };
+
+  let applicableTotal = 0;
+  const hasRestrictions =
+    coupon.applicableProducts.length > 0 ||
+    coupon.applicableCategories.length > 0;
+
+  if (hasRestrictions) {
+    const productIds = items.map((item: any) => item.productId);
+    const cartProducts = await db.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, categoryId: true },
+    });
+
+    items.forEach((item: any) => {
+      const pInfo = cartProducts.find((p) => p.id === item.productId);
+      const isProductApplicable =
+        coupon.applicableProducts.length === 0 ||
+        coupon.applicableProducts.some((p) => p.id === item.productId);
+      const isCategoryApplicable =
+        coupon.applicableCategories.length === 0 ||
+        coupon.applicableCategories.some((c) => c.id === pInfo?.categoryId);
+
+      if (isProductApplicable && isCategoryApplicable) {
+        applicableTotal += (item.price || 0) * (item.quantity || 0);
+      }
+    });
+  } else {
+    applicableTotal = subtotal;
+  }
+
+  if (applicableTotal < coupon.minCartValue)
+    return { discountAmount: 0, appliedCoupon: null };
+
+  let discountAmount = 0;
+  if (coupon.discountType === "percentage") {
+    discountAmount = (applicableTotal * coupon.discountValue) / 100;
+    if (coupon.maxDiscountCap && discountAmount > coupon.maxDiscountCap) {
+      discountAmount = coupon.maxDiscountCap;
+    }
+  } else {
+    discountAmount = Math.min(coupon.discountValue, applicableTotal);
+  }
+
+  return { discountAmount, appliedCoupon: coupon };
+}

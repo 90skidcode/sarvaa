@@ -1,0 +1,323 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // When using Neon pooler, set DIRECT_DATABASE_URL to the non-pooled connection string
+  // for migrations. Uncomment below when configured:
+  // directUrl = env("DIRECT_DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String?
+  password    String
+  role        String   @default("customer") // "customer" or "admin"
+  phone       String?
+  phoneNumber String?  @unique // Full phone number with country code (e.g., +919843883829)
+  firebaseUid String?  @unique // Firebase user ID for phone auth users
+  address     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orders    Order[]
+  cartItems CartItem[]
+  wishlist  WishlistItem[]
+  coupon    Coupon?        @relation(fields: [couponId], references: [id])
+  couponId  String?
+  storeId   String?
+  store     Store?         @relation(fields: [storeId], references: [id])
+
+  @@index([role])
+  @@index([firebaseUid])
+  @@index([storeId])
+}
+
+model Category {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  slug         String   @unique
+  description  String?
+  image        String?
+  isActive     Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  products Product[]
+  coupon   Coupon?   @relation(fields: [couponId], references: [id])
+  couponId String?
+
+  @@index([isActive])
+  @@index([displayOrder])
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String
+  price       Float // Base price for default weight
+  image       String // Primary image (for backward compatibility)
+  images      String? // JSON array of additional images: ["url1", "url2", "url3"]
+  stock       Int      @default(0)
+  featured    Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  categoryId  String
+  weights     String? // JSON: [{weight:"250g",price:349},{weight:"500g",price:649},{weight:"1kg",price:1199}]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category      Category       @relation(fields: [categoryId], references: [id])
+  orderItems    OrderItem[]
+  cartItems     CartItem[]
+  coupon        Coupon?        @relation(fields: [couponId], references: [id])
+  couponId      String?
+  wishlistItems WishlistItem[]
+
+  @@index([categoryId])
+  @@index([featured])
+  @@index([isActive])
+  @@index([slug])
+  @@index([createdAt])
+  @@index([categoryId, isActive])
+  @@index([isActive, featured])
+}
+
+model Order {
+  id          String   @id @default(cuid())
+  orderNumber String   @unique
+  status      String   @default("pending") // pending, confirmed, preparing, ready, delivered, cancelled
+  total       Float
+  userId      String?
+  phone       String
+  email       String?
+  name        String?
+  address     String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user                  User?            @relation(fields: [userId], references: [id])
+  store                 Store?           @relation(fields: [storeId], references: [id])
+  items                 OrderItem[]
+  statusHistory         OrderStatusLog[]
+  storeId               String?
+  couponId              String?
+  coupon                Coupon?          @relation(fields: [couponId], references: [id])
+  couponCode            String?
+  discountAmount        Float            @default(0)
+  paymentMethod         String           @default("cod") // "cod" or "phonepe"
+  paymentStatus         String           @default("pending") // "pending", "initiated", "SUCCESS", "FAILED"
+  merchantTransactionId String?          @unique // Our order ID sent to PhonePe (e.g., PP-ORD-000001)
+  phonePeOrderId        String?          @unique // PhonePe's order ID returned from their API (e.g., OMO...)
+
+  @@index([userId])
+  @@index([status])
+  @@index([storeId])
+  @@index([createdAt])
+  @@index([paymentStatus])
+  @@index([userId, status])
+  @@index([storeId, status])
+}
+
+model Coupon {
+  id             String   @id @default(cuid())
+  code           String   @unique
+  discountType   String // "percentage" or "fixed"
+  discountValue  Float
+  minCartValue   Float    @default(0)
+  maxDiscountCap Float?
+  startDate      DateTime
+  expiryDate     DateTime
+  usageLimit     Int? // Total number of times this coupon can be used
+  userLimit      Int      @default(1) // Number of times a single user can use it
+  usedCount      Int      @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  applicableProducts   Product[]
+  applicableCategories Category[]
+  eligibleUsers        User[]
+  orders               Order[]
+
+  @@index([isActive])
+  @@index([expiryDate])
+}
+
+model OrderStatusLog {
+  id        String   @id @default(cuid())
+  orderId   String
+  status    String // pending, confirmed, preparing, ready, delivered, cancelled
+  notes     String?
+  createdAt DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Float
+  weight    String? // Selected weight (e.g., "500g")
+  createdAt DateTime @default(now())
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String?
+  sessionId String? // For guest users
+  productId String
+  quantity  Int
+  weight    String? // Selected weight (e.g., "500g")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User?   @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId, weight])
+  @@index([userId])
+  @@index([sessionId])
+  @@index([productId])
+}
+
+model Store {
+  id               String            @id @default(cuid())
+  name             String
+  address          String
+  phone            String?
+  email            String?
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  orders           Order[]
+  customCakeOrders CustomCakeOrder[]
+  users            User[]
+}
+
+model CustomCakeOrder {
+  id            String    @id @default(cuid())
+  customerName  String
+  phone         String
+  email         String?
+  cakeImage     String // Primary/First image
+  images        String? // JSON array of additional image paths: ["url1", "url2"]
+  description   String?
+  status        String    @default("pending") // pending, quoted, confirmed, completed, cancelled
+  preferredDate DateTime?
+  storeId       String
+  store         Store     @relation(fields: [storeId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([storeId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Unit {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  abbreviation String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Settings {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String // JSON string for complex values
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Banner {
+  id               String   @id @default(cuid())
+  title            String
+  desktopImage     String // Desktop banner image path (1920x768)
+  mobileImage      String? // Mobile banner image path (768x512)
+  link             String? // Custom URL when linkType=URL
+  type             String   @default("HERO") // HERO | PROMO
+  ctaLabel         String? // Optional button label (e.g. "Shop Now")
+  linkType         String   @default("URL") // PRODUCT | CATEGORY | URL
+  linkProductSlug  String? // Product slug when linkType=PRODUCT
+  linkCategorySlug String? // Category slug when linkType=CATEGORY
+  isActive         Boolean  @default(true)
+  displayOrder     Int      @default(0) // Order in which banners appear
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([type, isActive, displayOrder])
+}
+
+model UserProfile {
+  id          String   @id @default(cuid())
+  firebaseUid String   @unique // Firebase user ID
+  phoneNumber String   @unique // Phone number with country code
+  phone       String? // Phone number without country code
+  name        String?
+  email       String?
+  address     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+}
+
+model ContactInfo {
+  id           String   @id @default(cuid())
+  phoneNumber  String
+  whatsappNumber String?
+  email        String
+  address      String
+  city         String
+  postalCode   String
+  state        String
+  country      String
+  latitude     String?
+  longitude    String?
+  hoursMonSat  String   @default("9:00 AM - 8:00 PM")
+  hoursSunday  String   @default("10:00 AM - 6:00 PM")
+  responseTime String   @default("24 hours")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([id])
+}
