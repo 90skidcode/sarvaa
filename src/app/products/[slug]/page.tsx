@@ -1,22 +1,12 @@
 import { ProductDetailClientWrapper } from '@/components/ProductDetailClientWrapper'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 interface ProductPageProps {
   params: Promise<{
     slug: string
   }>
-}
-
-// Generate static params for all products
-export async function generateStaticParams() {
-  const products = await prisma.product.findMany({
-    where: { isActive: true },
-    select: { slug: true }
-  })
-
-  return products.map((product) => ({
-    slug: product.slug
-  }))
 }
 
 // Generate metadata for SEO
