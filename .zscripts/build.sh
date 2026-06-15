@@ -64,6 +64,13 @@ if [ -d ".next/standalone" ]; then
     cp -r .next/standalone "$BUILD_DIR/next-service-dist/"
 fi
 
+# Copy Prisma native query engine — not auto-included by Next.js standalone file tracing
+if [ -d "node_modules/.prisma/client" ]; then
+    echo "  - 复制 Prisma native engine (.prisma/client)"
+    mkdir -p "$BUILD_DIR/next-service-dist/node_modules/.prisma/client"
+    cp -r node_modules/.prisma/client/. "$BUILD_DIR/next-service-dist/node_modules/.prisma/client/"
+fi
+
 # 复制 Next.js 静态文件
 if [ -d ".next/static" ]; then
     echo "  - 复制 .next/static"
